@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+
+[[mods]]
+modId="custom_background_music"
+version="1.0.0"
+displayName="Custom Background Music"
+description='''
+A mod that allows you to upload and play custom music files as background music in Minecraft, overriding the default music system.
+'''
+authors="Dash_Ketch"
+displayURL="https://github.com/yourusername/custom-background-music"
+
+[[dependencies.custom_background_music]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.0,)"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.custom_background_music]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.22)"
+ordering="NONE"
+side="CLIENT"
