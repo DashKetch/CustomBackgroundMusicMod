@@ -1,4 +1,4 @@
 {
-  "key.category.custom_background_music.music": "Custom Background Music",
-  "key.custom_background_music.open_gui": "Open Music GUI"
+  "key.categories.custom_background_music": "Custom Background Music",
+  "key.custom_background_music.open_music_gui": "Open Music GUI"
 }

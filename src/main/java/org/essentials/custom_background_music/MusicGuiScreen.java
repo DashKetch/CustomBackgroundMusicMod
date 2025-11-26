@@ -79,7 +79,7 @@ public class MusicGuiScreen extends Screen {
                     audioManager.stop();
                     audioManager.cleanup();
                     MusicOverrideManager.getInstance().setCustomMusicPlaying(false);
-                    Custom_background_music.LOGGER.info("Deleted custom music");
+                    CustomBackgroundMusic.LOGGER.info("Deleted custom music");
                 }
         ).bounds(centerX - BUTTON_WIDTH / 2, startY + 60, BUTTON_WIDTH, BUTTON_HEIGHT).build();
         this.addRenderableWidget(deleteButton);
@@ -138,15 +138,15 @@ public class MusicGuiScreen extends Screen {
                     File selectedFile = fileChooser.getSelectedFile();
                     Minecraft.getInstance().execute(() -> {
                         if (audioManager.loadMusicFile(selectedFile)) {
-                            Custom_background_music.LOGGER.info("Loaded music file: " + selectedFile.getName());
+                            CustomBackgroundMusic.LOGGER.info("Loaded music file: " + selectedFile.getName());
                             updateButtonStates();
                         } else {
-                            Custom_background_music.LOGGER.error("Failed to load music file: " + selectedFile.getName());
+                            CustomBackgroundMusic.LOGGER.error("Failed to load music file: " + selectedFile.getName());
                         }
                     });
                 }
             } catch (Exception e) {
-                Custom_background_music.LOGGER.error("Error opening file chooser", e);
+                CustomBackgroundMusic.LOGGER.error("Error opening file chooser", e);
             }
         });
         fileChooserThread.start();

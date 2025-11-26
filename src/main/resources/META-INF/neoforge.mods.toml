@@ -14,13 +14,13 @@ A mod that allows you to upload and play custom music files as background music 
 [[dependencies.custom_background_music]]
 modId="neoforge"
 type="required"
-versionRange="[21.1.0,)"
+versionRange="[21.1.10,)"
 ordering="NONE"
 side="CLIENT"
 
 [[dependencies.custom_background_music]]
 modId="minecraft"
 type="required"
-versionRange="[1.21.1,1.22)"
+version="[21.1.10,)"
 ordering="NONE"
 side="CLIENT"

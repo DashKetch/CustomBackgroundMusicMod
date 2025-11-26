@@ -5,7 +5,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
-@EventBusSubscriber(modid = Custom_background_music.MODID)
+@EventBusSubscriber(modid = CustomBackgroundMusic.MODID)
 public class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
@@ -79,7 +79,7 @@ public class Config {
         showFileNameInGui = SHOW_FILE_NAME_IN_GUI.get();
         showPlaybackStatus = SHOW_PLAYBACK_STATUS.get();
 
-        Custom_background_music.LOGGER.info("Custom Background Music config loaded");
+        CustomBackgroundMusic.LOGGER.info("Custom Background Music config loaded");
     }
 
     // Helper method to save the last music file path

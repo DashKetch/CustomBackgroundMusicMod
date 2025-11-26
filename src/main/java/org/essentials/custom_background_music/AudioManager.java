@@ -54,11 +54,11 @@ public class AudioManager {
                 return loadWavOrMp3File(file);
             }
 
-            Custom_background_music.LOGGER.error("Unsupported audio format: " + fileName);
+            CustomBackgroundMusic.LOGGER.error("Unsupported audio format: " + fileName);
             return false;
 
         } catch (Exception e) {
-            Custom_background_music.LOGGER.error("Failed to load music file", e);
+            CustomBackgroundMusic.LOGGER.error("Failed to load music file", e);
             return false;
         }
     }
@@ -76,7 +76,7 @@ public class AudioManager {
                 );
 
                 if (rawAudioBuffer == null) {
-                    Custom_background_music.LOGGER.error("Failed to decode OGG file");
+                    CustomBackgroundMusic.LOGGER.error("Failed to decode OGG file");
                     return false;
                 }
 
@@ -97,7 +97,7 @@ public class AudioManager {
                 return true;
             }
         } catch (Exception e) {
-            Custom_background_music.LOGGER.error("Failed to load OGG file", e);
+            CustomBackgroundMusic.LOGGER.error("Failed to load OGG file", e);
             return false;
         }
     }
@@ -145,7 +145,7 @@ public class AudioManager {
             return true;
 
         } catch (Exception e) {
-            Custom_background_music.LOGGER.error("Failed to load WAV/MP3 file", e);
+            CustomBackgroundMusic.LOGGER.error("Failed to load WAV/MP3 file", e);
             return false;
         }
     }
@@ -154,7 +154,7 @@ public class AudioManager {
         if (bufferId != -1 && sourceId != -1) {
             AL10.alSourcePlay(sourceId);
             isPlaying = true;
-            Custom_background_music.LOGGER.info("Playing custom music: " + currentFileName);
+            CustomBackgroundMusic.LOGGER.info("Playing custom music: " + currentFileName);
         }
     }
 

@@ -29,7 +29,7 @@ public class MusicOverrideManager {
         if (customMusicPlaying && sound != null && sound.getLocation().getPath().contains("music")) {
             // Cancel Minecraft's music when custom music is playing
             event.setSound(null);
-            Custom_background_music.LOGGER.debug("Blocked Minecraft music: " + sound.getLocation());
+            CustomBackgroundMusic.LOGGER.debug("Blocked Minecraft music: " + sound.getLocation());
         }
     }
 

@@ -9,26 +9,22 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Mod(Custom_background_music.MODID)
-public class Custom_background_music {
+@Mod(CustomBackgroundMusic.MODID)
+public class CustomBackgroundMusic {
     public static final String MODID = "custom_background_music";
-    public static final Logger LOGGER = LoggerFactory.getLogger(Custom_background_music.MODID);
+    public static final Logger LOGGER = LoggerFactory.getLogger(CustomBackgroundMusic.MODID);
 
-    public Custom_background_music(IEventBus modEventBus, ModContainer modContainer) {
+    public CustomBackgroundMusic(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("Custom Background Music Mod initializing...");
 
-        // Register config
         modContainer.registerConfig(ModConfig.Type.CLIENT, Config.SPEC);
 
-        // Register key bindings (on mod event bus)
         modEventBus.addListener(KeyBindings::registerBindings);
 
-        // Register client tick event (on forge event bus)
         NeoForge.EVENT_BUS.addListener(this::onClientTick);
     }
 
     private void onClientTick(ClientTickEvent.Post event) {
-        // Check if the key was pressed
         if (KeyBindings.OPEN_MUSIC_GUI.consumeClick()) {
             MusicGuiScreen.open();
         }
