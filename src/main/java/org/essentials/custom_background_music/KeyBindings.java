@@ -1,6 +1,5 @@
 package org.essentials.custom_background_music;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -13,17 +12,15 @@ import org.lwjgl.glfw.GLFW;
 @EventBusSubscriber(modid = "custom_background_music", bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class KeyBindings {
 
-    // Key mapping is lazily constructed so it doesn’t exist until registration
     public static final Lazy<KeyMapping> OPEN_MUSIC_GUI = Lazy.of(() -> {
         KeyMapping mapping = new KeyMapping(
-                "key.custom_background_music.open_music_gui",  // translation key
-                InputConstants.Type.KEYSYM,                   // keyboard input
+                "key.custom_background_music.open_music_gui", // translation key
                 GLFW.GLFW_KEY_P,                              // default key
-                "key.categories.misc"                         // category (string)
+                "key.categories.custom_background_music"                         // category string
         );
 
-        // Optional: only active when GUI screens are open
-        mapping.setKeyConflictContext(KeyConflictContext.GUI);
+        //only works when no GUI is open
+        mapping.setKeyConflictContext(KeyConflictContext.IN_GAME);
 
         return mapping;
     });
