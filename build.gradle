@@ -13,6 +13,15 @@ repositories {
     mavenLocal()
 }
 
+//noinspection ConfigurationAvoidance
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group == 'org.ow2.asm') {
+            details.useVersion '9.8'
+        }
+    }
+}
+
 base {
     archivesName = project.mod_id
 }
