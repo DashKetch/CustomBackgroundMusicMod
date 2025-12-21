@@ -15,7 +15,6 @@ public class CustomBackgroundMusic {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public CustomBackgroundMusic() {
-        // Initialize the music folder
         createMusicDirectory();
     }
 
