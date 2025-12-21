@@ -6,25 +6,31 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.client.settings.KeyConflictContext;
-import net.neoforged.neoforge.common.util.Lazy;
 import org.lwjgl.glfw.GLFW;
 
-@EventBusSubscriber(modid = CustomBackgroundMusic.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = "custom_background_music", bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class KeyBindings {
 
-    public static final Lazy<KeyMapping> OPEN_MUSIC_GUI = Lazy.of(() ->
-            new KeyMapping(
-                    "key.custom_background_music.open_music_gui", // translation key
-                    KeyConflictContext.UNIVERSAL,                 // REQUIRED in your version
-                    InputConstants.Type.KEYSYM,                   // REQUIRED
-                    GLFW.GLFW_KEY_P,                              // default key
-                    "key.categories.misc"                         // category
-            )
-    );
+    // The category in the Options > Controls menu
+    public static final String CATEGORY = "key.categories.custom_background_music";
+
+    // The translation key for the specific binding name
+    public static final String NAME = "key.custom_background_music.open_music_gui";
+
+    // The actual KeyMapping instance to be checked in your game loop
+    public static KeyMapping OPEN_MUSIC_GUI;
 
     @SubscribeEvent
-    public static void registerBindings(RegisterKeyMappingsEvent event) {
-        event.register(OPEN_MUSIC_GUI.get());
+    public static void registerKeys(RegisterKeyMappingsEvent event) {
+        // Initialize the KeyMapping
+        OPEN_MUSIC_GUI = new KeyMapping(
+                NAME, // Description (Lang key)
+                InputConstants.Type.KEYSYM, // Input Type (Keyboard)
+                GLFW.GLFW_KEY_M, // Default Key (set to 'M')
+                CATEGORY // Category (Lang key)
+        );
+
+        // Register it to the event
+        event.register(OPEN_MUSIC_GUI);
     }
 }
