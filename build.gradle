@@ -1,16 +1,16 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.78' // Ensure this version matches your setup
+    id 'net.neoforged.moddev' version '2.0.78'
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
-// Basic mod information
 version = '1.0.0'
 group = 'org.essentials.custom_background_music'
+
 base {
     archivesName = 'custom_background_music'
 }
@@ -18,10 +18,9 @@ base {
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 neoForge {
-    // These versions should match your gradle.properties or be defined here
+    // This version handles the NeoForge dependency automatically
     version = "21.1.213"
 
-    // Automatically sets up run configurations
     runs {
         client {
             client()
@@ -43,31 +42,21 @@ neoForge {
 repositories {
     mavenLocal()
     mavenCentral()
+    // NeoForge maven is usually handled by the plugin, but keeping it is fine
     maven { url = "https://maven.neoforged.net/releases" }
 }
 
 dependencies {
-    // 1. NeoForge dependency
-    implementation "net.neoforged:neoforge:21.1.0" // Use your specific version
-
-    // 2. Add JLayer to the COMPILE and RUNTIME classpath for development
-    // This fixes the "package does not exist" and "NoClassDefFoundError"
+    // JLayer for compilation and runtime
     implementation "javazoom:jlayer:1.0.1"
 
-    // 3. Bundle JLayer inside your final mod JAR (Jar-in-Jar)
-    // Using this simple syntax avoids the "strictly/prefer" Groovy errors
+    // This tells NeoForge to bundle the library into your mod jar
     jarJar "javazoom:jlayer:1.0.1"
 
-    // 4. Ensure the library is visible when you click 'Run Client' in IntelliJ
     additionalRuntimeClasspath "javazoom:jlayer:1.0.1"
 }
 
-// Optional: Configures the jarJar task to not add a 'jarjar' suffix to the filename
+// Ensure the bundled jar is the one produced
 tasks.named('jarJar') {
     archiveClassifier = ""
-}
-
-// Merges the jarJar output into the final build
-tasks.named('jar') {
-    finalizedBy 'jarJar'
 }
