@@ -71,18 +71,20 @@ public class MusicGuiScreen extends Screen {
     private void openFileChooser() {
         Thread thread = new Thread(() -> {
             try {
+                // Force the JVM to allow windows even if it thinks it's in headless mode
+                System.setProperty("java.awt.headless", "false");
+
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 JFileChooser chooser = new JFileChooser();
                 chooser.setDialogTitle("Select Music");
 
-                // Try to bring the window to the front
+                // This is the line that was crashing; it should work now with headless=false
                 int returnVal = chooser.showOpenDialog(null);
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     File file = chooser.getSelectedFile();
                     Minecraft.getInstance().execute(() -> {
                         audioManager.loadMusicFile(file);
-                        // FIXED: Using placeholders {} instead of + string concatenation
                         LOGGER.info("User selected file: {}", file.getAbsolutePath());
                     });
                 }
