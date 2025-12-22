@@ -15,13 +15,16 @@ public class MusicGuiScreen extends Screen {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final int BUTTON_WIDTH = 200;
     private static final int BUTTON_HEIGHT = 20;
+    private static final int SPACING = 24; // Increased spacing to prevent squashing
 
     private final AudioManager audioManager = AudioManager.getInstance();
-    private Button uploadButton;
+
+    // Buttons
     private Button playButton;
     private Button pauseButton;
     private Button stopButton;
-    private Button deleteButton;
+    private Button clearButton;
+
     private float volume = 1.0f;
 
     public MusicGuiScreen() {
@@ -35,78 +38,71 @@ public class MusicGuiScreen extends Screen {
     @Override
     protected void init() {
         int centerX = this.width / 2;
-        int startY = this.height / 2 - 80;
+        int startY = this.height / 2 - 60;
 
-        // Upload button
-        uploadButton = this.addRenderableWidget(Button.builder(
+        // 1. Upload Button (Top)
+        this.addRenderableWidget(Button.builder(
                 Component.literal("Upload Music File"),
                 button -> openFileChooser()
         ).bounds(centerX - BUTTON_WIDTH / 2, startY, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
-        // Play button
-        playButton = this.addRenderableWidget(Button.builder(
-                Component.literal("Play"),
-                button -> audioManager.play()
-        ).bounds(centerX - BUTTON_WIDTH / 2, startY + 30, BUTTON_WIDTH / 3 - 5, BUTTON_HEIGHT).build());
+        // 2. Play/Pause/Stop Row (Middle)
+        int rowY = startY + SPACING + 10;
+        int smallBtnWidth = (BUTTON_WIDTH / 3) - 4;
 
-        // Pause button
-        pauseButton = this.addRenderableWidget(Button.builder(
-                Component.literal("Pause"),
-                button -> audioManager.pause()
-        ).bounds(centerX - BUTTON_WIDTH / 2 + BUTTON_WIDTH / 3 + 5, startY + 30, BUTTON_WIDTH / 3 - 5, BUTTON_HEIGHT).build());
+        playButton = this.addRenderableWidget(Button.builder(Component.literal("Play"), b -> audioManager.play())
+                .bounds(centerX - BUTTON_WIDTH / 2, rowY, smallBtnWidth, BUTTON_HEIGHT).build());
 
-        // Stop button
-        stopButton = this.addRenderableWidget(Button.builder(
-                Component.literal("Stop"),
-                button -> audioManager.stop()
-        ).bounds(centerX - BUTTON_WIDTH / 2 + 2 * (BUTTON_WIDTH / 3 + 5), startY + 30, BUTTON_WIDTH / 3 - 5, BUTTON_HEIGHT).build());
+        pauseButton = this.addRenderableWidget(Button.builder(Component.literal("Pause"), b -> audioManager.pause())
+                .bounds(centerX - (smallBtnWidth / 2), rowY, smallBtnWidth, BUTTON_HEIGHT).build());
 
-        // Delete/Cleanup button
-        deleteButton = this.addRenderableWidget(Button.builder(
-                Component.literal("Clear Loaded Track"),
-                button -> {
-                    audioManager.stop();
-                    audioManager.cleanup();
-                }
-        ).bounds(centerX - BUTTON_WIDTH / 2, startY + 60, BUTTON_WIDTH, BUTTON_HEIGHT).build());
+        stopButton = this.addRenderableWidget(Button.builder(Component.literal("Stop"), b -> audioManager.stop())
+                .bounds(centerX + (BUTTON_WIDTH / 2) - smallBtnWidth, rowY, smallBtnWidth, BUTTON_HEIGHT).build());
 
-        // Volume buttons
-        this.addRenderableWidget(Button.builder(Component.literal("Vol +"), b -> {
-            volume = Math.min(1.0f, volume + 0.1f);
-            audioManager.setVolume(volume);
-        }).bounds(centerX - BUTTON_WIDTH / 2, startY + 90, BUTTON_WIDTH / 2 - 5, BUTTON_HEIGHT).build());
+        // 3. Volume Row
+        int volY = rowY + SPACING;
+        this.addRenderableWidget(Button.builder(Component.literal("Vol -"), b -> adjustVolume(-0.1f))
+                .bounds(centerX - BUTTON_WIDTH / 2, volY, BUTTON_WIDTH / 2 - 2, BUTTON_HEIGHT).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Vol -"), b -> {
-            volume = Math.max(0.0f, volume - 0.1f);
-            audioManager.setVolume(volume);
-        }).bounds(centerX + 5, startY + 90, BUTTON_WIDTH / 2 - 5, BUTTON_HEIGHT).build());
+        this.addRenderableWidget(Button.builder(Component.literal("Vol +"), b -> adjustVolume(0.1f))
+                .bounds(centerX + 2, volY, BUTTON_WIDTH / 2 - 2, BUTTON_HEIGHT).build());
 
-        // Close button
+        // 4. Clear/Close (Bottom)
+        clearButton = this.addRenderableWidget(Button.builder(Component.literal("Clear Track"), b -> {
+            audioManager.stop();
+            audioManager.cleanup();
+        }).bounds(centerX - BUTTON_WIDTH / 2, volY + SPACING + 10, BUTTON_WIDTH, BUTTON_HEIGHT).build());
+
         this.addRenderableWidget(Button.builder(Component.literal("Close"), b -> this.onClose())
-                .bounds(centerX - BUTTON_WIDTH / 2, startY + 120, BUTTON_WIDTH, BUTTON_HEIGHT).build());
+                .bounds(centerX - BUTTON_WIDTH / 2, volY + (SPACING * 2) + 10, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
         updateButtonStates();
     }
 
+    private void adjustVolume(float amount) {
+        volume = Math.max(0.0f, Math.min(1.0f, volume + amount));
+        audioManager.setVolume(volume);
+    }
+
     private void openFileChooser() {
-        Thread fileChooserThread = new Thread(() -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                JFileChooser fileChooser = new JFileChooser();
-                int result = fileChooser.showOpenDialog(null);
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    File selectedFile = fileChooser.getSelectedFile();
-                    Minecraft.getInstance().execute(() -> {
-                        if (audioManager.loadMusicFile(selectedFile)) {
-                            updateButtonStates();
-                        }
-                    });
-                }
-            } catch (Exception e) {
-                LOGGER.error("Error opening file chooser", e);
+        // Swing utilities need to run on a separate thread to not freeze Minecraft
+        Thread thread = new Thread(() -> {
+            JFileChooser chooser = new JFileChooser();
+            // Set to user directory or config directory
+            chooser.setDialogTitle("Select Music (.ogg, .wav, .mp3)");
+            int returnVal = chooser.showOpenDialog(null);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                File file = chooser.getSelectedFile();
+                // Hand the file back to the Main Minecraft Thread
+                Minecraft.getInstance().execute(() -> {
+                    if (audioManager.loadMusicFile(file)) {
+                        LOGGER.info("Successfully loaded: " + file.getName());
+                    }
+                });
             }
         });
-        fileChooserThread.start();
+        thread.start();
     }
 
     private void updateButtonStates() {
@@ -114,7 +110,7 @@ public class MusicGuiScreen extends Screen {
         if (playButton != null) playButton.active = hasMusic;
         if (pauseButton != null) pauseButton.active = hasMusic;
         if (stopButton != null) stopButton.active = hasMusic;
-        if (deleteButton != null) deleteButton.active = hasMusic;
+        if (clearButton != null) clearButton.active = hasMusic;
     }
 
     @Override
@@ -125,22 +121,16 @@ public class MusicGuiScreen extends Screen {
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 20, 0xFFFFFF);
 
         String currentFile = audioManager.getCurrentFileName();
-        String fileText = (currentFile != null) ? "Current: " + currentFile : "No music loaded";
-        guiGraphics.drawCenteredString(this.font, fileText, this.width / 2, this.height / 2 - 100, (currentFile != null) ? 0xAAFFAA : 0xAAAAAA);
+        String fileText = (currentFile != null) ? "File: " + currentFile : "No music loaded";
+        guiGraphics.drawCenteredString(this.font, fileText, this.width / 2, this.height / 2 - 90, 0xAAFFAA);
 
         String status = audioManager.isPlaying() ? "Playing" : "Stopped/Paused";
-        guiGraphics.drawCenteredString(this.font, "Status: " + status, this.width / 2, this.height / 2 + 50, 0xFFFFAA);
-        guiGraphics.drawCenteredString(this.font, String.format("Volume: %.0f%%", volume * 100), this.width / 2, this.height / 2 + 65, 0xAAFFFF);
+        guiGraphics.drawString(this.font, "Status: " + status, (this.width / 2) - 95, this.height / 2 + 60, 0xFFFFAA);
+        guiGraphics.drawString(this.font, String.format("Volume: %.0f%%", volume * 100), (this.width / 2) + 30, this.height / 2 + 60, 0xAAFFFF);
     }
 
     @Override
     public void tick() {
-        super.tick();
         updateButtonStates();
-    }
-
-    @Override
-    public boolean isPauseScreen() {
-        return false;
     }
 }
