@@ -7,9 +7,9 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
+import org.lwjgl.util.tinyfd.TinyFileDialogs; // Native file dialogs
 import org.slf4j.Logger;
 
-import javax.swing.*;
 import java.io.File;
 
 public class MusicGuiScreen extends Screen {
@@ -61,7 +61,7 @@ public class MusicGuiScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("Clear Track"), b -> audioManager.cleanup())
                 .bounds(centerX - 100, yPos, 200, 20).build());
 
-        // 5. Close Button (Anchored to bottom)
+        // 5. Close Button
         this.addRenderableWidget(Button.builder(Component.literal("Close"), b -> this.onClose())
                 .bounds(centerX - 100, this.height - 35, 200, 20).build());
 
@@ -69,29 +69,32 @@ public class MusicGuiScreen extends Screen {
     }
 
     private void openFileChooser() {
+        // Run on a separate thread so the game doesn't freeze while the window is open
         Thread thread = new Thread(() -> {
             try {
-                // Force the JVM to allow windows even if it thinks it's in headless mode
-                System.setProperty("java.awt.headless", "false");
+                // native file dialog: title, defaultPath, filter patterns, filter description, allow multiple
+                String filePath = TinyFileDialogs.tinyfd_openFileDialog(
+                        "Select Music File",
+                        "",
+                        null,
+                        "Music Files (*.mp3, *.wav, *.ogg)",
+                        false
+                );
 
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                JFileChooser chooser = new JFileChooser();
-                chooser.setDialogTitle("Select Music");
-
-                // This is the line that was crashing; it should work now with headless=false
-                int returnVal = chooser.showOpenDialog(null);
-
-                if (returnVal == JFileChooser.APPROVE_OPTION) {
-                    File file = chooser.getSelectedFile();
+                if (filePath != null) {
+                    File file = new File(filePath);
+                    // Return to Minecraft's main thread to update the UI/Manager
                     Minecraft.getInstance().execute(() -> {
-                        audioManager.loadMusicFile(file);
-                        LOGGER.info("User selected file: {}", file.getAbsolutePath());
+                        if (audioManager.loadMusicFile(file)) {
+                            LOGGER.info("Successfully selected file: {}", file.getAbsolutePath());
+                        }
                     });
                 }
             } catch (Exception e) {
-                LOGGER.error("Failed to open file chooser", e);
+                LOGGER.error("Native file chooser error", e);
             }
         });
+        thread.setDaemon(true); // Ensures the thread dies if the game closes
         thread.start();
     }
 

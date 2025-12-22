@@ -37,6 +37,7 @@ runs {
 
     client {
         systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+        systemProperty 'java.awt.headless', 'false'
     }
 
     server {
