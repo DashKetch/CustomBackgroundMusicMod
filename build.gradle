@@ -55,13 +55,3 @@ dependencies {
 
     additionalRuntimeClasspath "javazoom:jlayer:1.0.1"
 }
-
-// FIX: Setting the name for the bundled jar
-tasks.named('jarJar') {
-    archiveFileName.set("${base.archivesName.get()}-${version}.jar")
-}
-
-// FIX: Ensure the jarJar task runs during the build process
-tasks.named('jar') {
-    finalizedBy 'jarJar'
-}
