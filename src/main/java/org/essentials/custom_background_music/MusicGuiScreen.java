@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import javax.swing.*;
@@ -18,7 +19,6 @@ public class MusicGuiScreen extends Screen {
     private Button playButton;
     private Button pauseButton;
     private Button stopButton;
-    private Button clearButton;
 
     public MusicGuiScreen() {
         super(Component.literal("Custom Music Player"));
@@ -31,68 +31,55 @@ public class MusicGuiScreen extends Screen {
     @Override
     protected void init() {
         int centerX = this.width / 2;
-        int currentY = 40; // Starting height
+        int yPos = 40; // The "Anchor" point for the top of the UI
 
-        // 1. Upload Section
+        // 1. Upload Button
         this.addRenderableWidget(Button.builder(Component.literal("Upload Music File"), b -> openFileChooser())
-                .bounds(centerX - 100, currentY, 200, 20).build());
+                .bounds(centerX - 100, yPos, 200, 20).build());
 
-        // 2. Transport Controls (Play/Pause/Stop)
-        currentY += 30;
+        // 2. Play/Pause/Stop Row (30 pixels below Upload)
+        yPos += 30;
         playButton = this.addRenderableWidget(Button.builder(Component.literal("Play"), b -> audioManager.play())
-                .bounds(centerX - 100, currentY, 64, 20).build());
+                .bounds(centerX - 100, yPos, 64, 20).build());
 
         pauseButton = this.addRenderableWidget(Button.builder(Component.literal("Pause"), b -> audioManager.pause())
-                .bounds(centerX - 32, currentY, 64, 20).build());
+                .bounds(centerX - 32, yPos, 64, 20).build());
 
         stopButton = this.addRenderableWidget(Button.builder(Component.literal("Stop"), b -> audioManager.stop())
-                .bounds(centerX + 36, currentY, 64, 20).build());
+                .bounds(centerX + 36, yPos, 64, 20).build());
 
-        // 3. Volume Controls
-        currentY += 25;
-        this.addRenderableWidget(Button.builder(Component.literal("Vol -"), b -> adjustVolume(-0.1f))
-                .bounds(centerX - 100, currentY, 98, 20).build());
+        // 3. Volume Row (25 pixels below Transport)
+        yPos += 25;
+        this.addRenderableWidget(Button.builder(Component.literal("Vol -"), b -> audioManager.setVolume(audioManager.getVolume() - 0.1f))
+                .bounds(centerX - 100, yPos, 98, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Vol +"), b -> adjustVolume(0.1f))
-                .bounds(centerX + 2, currentY, 98, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("Vol +"), b -> audioManager.setVolume(audioManager.getVolume() + 0.1f))
+                .bounds(centerX + 2, yPos, 98, 20).build());
 
-        // 4. Utility Section
-        currentY += 30;
-        clearButton = this.addRenderableWidget(Button.builder(Component.literal("Clear Track"), b -> audioManager.cleanup())
-                .bounds(centerX - 100, currentY, 200, 20).build());
+        // 4. Clear Button (30 pixels below Volume)
+        yPos += 30;
+        this.addRenderableWidget(Button.builder(Component.literal("Clear Track"), b -> audioManager.cleanup())
+                .bounds(centerX - 100, yPos, 200, 20).build());
 
-        // 5. Exit Section (Placed lower to avoid clutter)
+        // 5. Close Button (Fixed at the very bottom area with space for text)
         this.addRenderableWidget(Button.builder(Component.literal("Close"), b -> this.onClose())
-                .bounds(centerX - 100, currentY + 50, 200, 20).build());
+                .bounds(centerX - 100, this.height - 40, 200, 20).build());
 
         updateButtonStates();
     }
 
-    private void adjustVolume(float amount) {
-        float newVol = Math.max(0.0f, Math.min(1.0f, audioManager.getVolume() + amount));
-        audioManager.setVolume(newVol);
-    }
-
     private void openFileChooser() {
-        // Run in a separate thread so Minecraft doesn't freeze while choosing a file
         Thread thread = new Thread(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 JFileChooser chooser = new JFileChooser();
-                chooser.setDialogTitle("Select Music File");
                 int returnVal = chooser.showOpenDialog(null);
-
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     File file = chooser.getSelectedFile();
-                    // Send the result back to the main Minecraft thread
-                    Minecraft.getInstance().execute(() -> {
-                        if (audioManager.loadMusicFile(file)) {
-                            LOGGER.info("Loaded music: {}", file.getName());
-                        }
-                    });
+                    Minecraft.getInstance().execute(() -> audioManager.loadMusicFile(file));
                 }
             } catch (Exception e) {
-                LOGGER.error("Failed to open file chooser", e);
+                LOGGER.error("File chooser error", e);
             }
         });
         thread.start();
@@ -103,26 +90,24 @@ public class MusicGuiScreen extends Screen {
         if (playButton != null) playButton.active = hasMusic;
         if (pauseButton != null) pauseButton.active = hasMusic;
         if (stopButton != null) stopButton.active = hasMusic;
-        if (clearButton != null) clearButton.active = hasMusic;
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         int centerX = this.width / 2;
         guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
 
-        // UI Information text
-        int infoY = 160;
-        String currentFile = audioManager.getCurrentFileName();
-        String fileDisplay = (currentFile != null) ? "§aFile: " + currentFile : "§7No music loaded";
-        guiGraphics.drawCenteredString(this.font, fileDisplay, centerX, infoY, 0xFFFFFF);
+        // Status area: Placed safely between buttons and the Close button
+        int statusY = this.height - 70;
+        String fileName = audioManager.hasLoadedMusic() ? "§a" + audioManager.getCurrentFileName() : "§7None";
+        guiGraphics.drawCenteredString(this.font, "File: " + fileName, centerX, statusY, 0xFFFFFF);
 
-        String statusStr = audioManager.isPlaying() ? "§6Playing" : "§cStopped";
-        guiGraphics.drawString(this.font, "Status: " + statusStr, centerX - 95, infoY + 15, 0xFFFFFF);
-        guiGraphics.drawString(this.font, String.format("Volume: %.0f%%", audioManager.getVolume() * 100), centerX + 25, infoY + 15, 0xFFFFFF);
+        String status = audioManager.isPlaying() ? "§6Playing" : "§cStopped";
+        guiGraphics.drawString(this.font, "Status: " + status, centerX - 95, statusY + 12, 0xFFFFFF);
+        guiGraphics.drawString(this.font, String.format("Vol: %.0f%%", audioManager.getVolume() * 100), centerX + 40, statusY + 12, 0xFFFFFF);
     }
 
     @Override
