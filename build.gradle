@@ -56,7 +56,12 @@ dependencies {
     additionalRuntimeClasspath "javazoom:jlayer:1.0.1"
 }
 
-// Ensure the bundled jar is the one produced
+// FIX: Setting the name for the bundled jar
 tasks.named('jarJar') {
-    archiveClassifier = ""
+    archiveFileName.set("${base.archivesName.get()}-${version}.jar")
+}
+
+// FIX: Ensure the jarJar task runs during the build process
+tasks.named('jar') {
+    finalizedBy 'jarJar'
 }
