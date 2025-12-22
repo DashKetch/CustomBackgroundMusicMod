@@ -1,108 +1,73 @@
 plugins {
     id 'java-library'
-    id 'eclipse'
-    id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.gradle.userdev' version '7.0.163'
-}
-
-version = project.mod_version
-group = project.mod_group_id
-
-repositories {
-    mavenLocal()
-}
-
-//noinspection ConfigurationAvoidance
-configurations.all {
-    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-        if (details.requested.group == 'org.ow2.asm') {
-            details.useVersion '9.8'
-        }
-    }
-}
-
-base {
-    archivesName = project.mod_id
-}
-
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
-
-runs {
-    configureEach {
-        systemProperty 'forge.logging.markers', 'REGISTRIES'
-        systemProperty 'forge.logging.console.level', 'debug'
-        modSource project.sourceSets.main
-    }
-
-    client {
-        systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
-        systemProperty 'java.awt.headless', 'false'
-    }
-
-    server {
-        systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
-        arguments '--nogui'
-    }
-
-    gameTestServer {
-        systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
-    }
-
-    data {
-        arguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-    }
-}
-
-sourceSets.main.resources { srcDir 'src/generated/resources' }
-
-dependencies {
-    implementation "net.neoforged:neoforge:${neo_version}"
-    // MP3 Support for Java AudioSystem
-    implementation 'javazoom:jlayer:1.0.1'
-}
-
-tasks.withType(ProcessResources).configureEach {
-    var replaceProperties = [
-            minecraft_version      : minecraft_version,
-            minecraft_version_range: minecraft_version_range,
-            neo_version            : neo_version,
-            neo_version_range      : neo_version_range,
-            loader_version_range   : loader_version_range,
-            mod_id                 : mod_id,
-            mod_name               : mod_name,
-            mod_license            : mod_license,
-            mod_version            : mod_version,
-            mod_authors            : mod_authors,
-            mod_description        : mod_description
-    ]
-    inputs.properties replaceProperties
-
-    filesMatching(['META-INF/neoforge.mods.toml']) {
-        expand replaceProperties
-    }
+    id 'net.neoforged.moddev' version '2.0.78' // Ensure this version matches your setup
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
-idea {
-    module {
-        downloadSources = true
-        downloadJavadoc = true
+// Basic mod information
+version = '1.0.0'
+group = 'org.essentials.custom_background_music'
+base {
+    archivesName = 'custom_background_music'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    // These versions should match your gradle.properties or be defined here
+    version = "21.1.213"
+
+    // Automatically sets up run configurations
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.logging.console.level', 'debug'
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+    }
+
+    mods {
+        custom_background_music {
+            sourceSet sourceSets.main
+        }
     }
 }
 
-publishing {
-    publications {
-        register('mavenJava', MavenPublication) {
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            url "file://${project.projectDir}/repo"
-        }
-    }
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url = "https://maven.neoforged.net/releases" }
+}
+
+dependencies {
+    // 1. NeoForge dependency
+    implementation "net.neoforged:neoforge:21.1.0" // Use your specific version
+
+    // 2. Add JLayer to the COMPILE and RUNTIME classpath for development
+    // This fixes the "package does not exist" and "NoClassDefFoundError"
+    implementation "javazoom:jlayer:1.0.1"
+
+    // 3. Bundle JLayer inside your final mod JAR (Jar-in-Jar)
+    // Using this simple syntax avoids the "strictly/prefer" Groovy errors
+    jarJar "javazoom:jlayer:1.0.1"
+
+    // 4. Ensure the library is visible when you click 'Run Client' in IntelliJ
+    additionalRuntimeClasspath "javazoom:jlayer:1.0.1"
+}
+
+// Optional: Configures the jarJar task to not add a 'jarjar' suffix to the filename
+tasks.named('jarJar') {
+    archiveClassifier = ""
+}
+
+// Merges the jarJar output into the final build
+tasks.named('jar') {
+    finalizedBy 'jarJar'
 }
