@@ -14,17 +14,14 @@ public class AudioManager {
         return INSTANCE;
     }
 
-    // Fixes "cannot find symbol method hasLoadedMusic()"
     public boolean hasLoadedMusic() {
         return currentFileName != null;
     }
 
-    // Fixes "cannot find symbol method getCurrentFileName()"
     public String getCurrentFileName() {
         return currentFileName;
     }
 
-    // Fixes "cannot find symbol method isPlaying()"
     public boolean isPlaying() {
         return playing;
     }
@@ -32,6 +29,7 @@ public class AudioManager {
     public boolean loadMusicFile(File file) {
         if (file != null && file.exists()) {
             this.currentFileName = file.getName();
+            // Sound engine integration goes here
             return true;
         }
         return false;
@@ -41,7 +39,6 @@ public class AudioManager {
         if (hasLoadedMusic()) this.playing = true;
     }
 
-    // Fixes "cannot find symbol method pause()"
     public void pause() {
         this.playing = false;
     }
@@ -50,7 +47,6 @@ public class AudioManager {
         this.playing = false;
     }
 
-    // Fixes "cannot find symbol method setVolume(float)"
     public void setVolume(float volume) {
         this.volume = Math.max(0.0f, Math.min(1.0f, volume));
     }
