@@ -4,6 +4,44 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.78'
 }
 
+apply plugin: 'java'
+
+def getCurrentVersion() {
+    return version.toString().split('\\.').collect { it.toInteger() }
+}
+
+def incrementVersion() {
+    def currentVersion = getCurrentVersion()
+    currentVersion[2] += 1 // Increase the patch version
+    return currentVersion.join('.')
+}
+
+// Set the initial version if not defined
+if (!version) {
+    version = '1.0.0' // Set your starting version here
+}
+
+// Task to increment the version
+tasks.register('incrementVersion') {
+    doLast {
+        def newVersion = incrementVersion()
+        project.version = newVersion
+
+        // Optionally, write the new version back to a file
+        def versionFile = file('gradle.properties')
+        if (versionFile.exists()) {
+            def props = new Properties()
+            versionFile.withInputStream { props.load(it) }
+            props.setProperty('projectVersion', newVersion)
+            versionFile.withOutputStream { props.store(it, null) }
+        }
+        println "Version updated to $newVersion"
+    }
+}
+
+// Hook the increment version task to run before the build task
+build.dependsOn incrementVersion
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
