@@ -3,14 +3,22 @@ package org.essentials.custom_background_music;
 import javazoom.jl.player.AudioDevice;
 import javazoom.jl.player.JavaSoundAudioDevice;
 import javazoom.jl.player.Player;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.sounds.SoundSource;
+
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.SourceDataLine;
 import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Field;
 
+import static org.essentials.custom_background_music.MusicMuter.muteMinecraftMusic;
+import static org.essentials.custom_background_music.MusicMuter.unmuteMinecraftMusic;
+
 public class AudioManager {
     private static final AudioManager INSTANCE = new AudioManager();
+    Minecraft mc = Minecraft.getInstance();
 
     private String currentFileName = null;
     private File musicFile = null;
@@ -22,6 +30,8 @@ public class AudioManager {
     private long totalLength = 0;
     private long pauseLocation = 0;
     private boolean isPaused = false;
+    @SuppressWarnings("FieldMayBeFinal")
+    private float currentVolume = mc.options.getSoundSourceVolume(SoundSource.MUSIC);
 
     private AudioManager() {}
 
@@ -63,6 +73,7 @@ public class AudioManager {
                 isPaused = false;
                 setVolume(this.volume);
 
+                muteMinecraftMusic();
                 player.play();
 
                 // FIX: Check if player is null before calling isComplete()
@@ -107,8 +118,10 @@ public class AudioManager {
     public void pauseButton() {
         if (isPaused) {
             play();
+            muteMinecraftMusic();
         } else {
             pause();
+            unmuteMinecraftMusic(currentVolume);
         }
     }
 
@@ -121,10 +134,12 @@ public class AudioManager {
         if (player != null) {
             player.close();
             player = null;
+            unmuteMinecraftMusic(currentVolume);
         }
         if (musicThread != null) {
             musicThread.interrupt();
             musicThread = null;
+            unmuteMinecraftMusic(currentVolume);
         }
     }
 

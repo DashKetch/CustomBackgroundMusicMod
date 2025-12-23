@@ -13,7 +13,7 @@ public class MusicMuter {
     private static final Logger LOGGER = LogManager.getLogger();
 
     // Store the original volume to restore it later
-    private final float originalMusicVolume = 1.0f;
+    //private final float originalMusicVolume = 1.0f;
 
     public MusicMuter() {
         if (FMLEnvironment.dist.isClient()) {
@@ -30,7 +30,7 @@ public class MusicMuter {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options != null) {
             // Get current volume setting
-            float currentVolume = mc.options.getSoundSourceVolume(SoundSource.MUSIC);
+            //float currentVolume = mc.options.getSoundSourceVolume(SoundSource.MUSIC);
 
             // Mute by setting to 0
             mc.options.getSoundSourceVolume(SoundSource.MUSIC);
