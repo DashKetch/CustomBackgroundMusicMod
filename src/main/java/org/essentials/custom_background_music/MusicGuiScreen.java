@@ -42,7 +42,7 @@ public class MusicGuiScreen extends Screen {
         playButton = this.addRenderableWidget(Button.builder(Component.literal("Play"), b -> audioManager.play())
                 .bounds(centerX - 100, yPos, 64, 20).build());
 
-        pauseButton = this.addRenderableWidget(Button.builder(Component.literal("Pause"), b -> audioManager.pause())
+        pauseButton = this.addRenderableWidget(Button.builder(Component.literal("Pause"), b -> audioManager.pauseButton())
                 .bounds(centerX - 32, yPos, 64, 20).build());
 
         stopButton = this.addRenderableWidget(Button.builder(Component.literal("Stop"), b -> audioManager.stop())
