@@ -44,6 +44,7 @@ public class AudioManager {
     /**
      * Starts or Resumes playback in a background thread.
      */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public void play() {
         if (musicFile == null) return;
 
@@ -86,6 +87,7 @@ public class AudioManager {
     /**
      * Pauses the music by capturing the current stream position and closing the player.
      */
+    @SuppressWarnings("CallToPrintStackTrace")
     public void pause() {
         if (player != null && !isPaused) {
             try {
@@ -163,6 +165,7 @@ public class AudioManager {
 
     public boolean isPlaying() { return player != null && !isPaused; }
 
+    @SuppressWarnings("unused")
     public boolean isPaused() { return isPaused; }
 
     public boolean hasLoadedMusic() { return currentFileName != null; }
