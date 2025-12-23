@@ -2,56 +2,47 @@ package org.essentials.custom_background_music;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundSource;
-import net.neoforged.fml.loading.FMLEnvironment;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-// Import the specific class
-
+import net.minecraft.client.OptionInstance;
 
 public class MusicMuter {
-    private static final Logger LOGGER = LogManager.getLogger();
 
-    // Store the original volume to restore it later
-    //private final float originalMusicVolume = 1.0f;
-
-    public MusicMuter() {
-        if (FMLEnvironment.dist.isClient()) {
-            // Logic for handling the mute state
-            LOGGER.info("MusicMuter initialized for Minecraft 1.21.1");
-        }
-    }
-
-    /**
-     * Call this when org.essentials.custom_background_music.AudioManager.play() is invoked.
-     */
+    private static Double originalVolume = null;
 
     public static void muteMinecraftMusic() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.options != null) {
-            // Get current volume setting
-            //float currentVolume = mc.options.getSoundSourceVolume(SoundSource.MUSIC);
+        mc.execute(() -> {
+            // Use the getter method to access the private option
+            OptionInstance<Double> musicOption = mc.options.getSoundSourceOptionInstance(SoundSource.MUSIC);
 
-            // Mute by setting to 0
-            mc.options.getSoundSourceVolume(SoundSource.MUSIC);
-            mc.options.save();
+            if (musicOption != null) {
+                double current = musicOption.get();
 
-            // Force sound engine to update immediately
-            mc.getSoundManager().updateSourceVolume(SoundSource.MUSIC, 0.0f);
-        }
+                if (current > 0.0) {
+                    originalVolume = current;
+                    musicOption.set(0.0);
+                    mc.options.save();
+
+                    // Force sound engine update
+                    mc.getSoundManager().updateSourceVolume(SoundSource.MUSIC, 0.0f);
+                }
+            }
+        });
     }
 
-    /**
-     * Call this when org.essentials.custom_background_music.AudioManager.stop() is invoked.
-     */
-    public static void unmuteMinecraftMusic(float previousVolume) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.options != null) {
-            // Restore volume (defaulting to 1.0f or a saved variable)
-            mc.options.getSoundSourceVolume(SoundSource.MUSIC);
-            mc.options.save();
+    public static void unmuteMinecraftMusic() {
+        if (originalVolume == null) return;
 
-            mc.getSoundManager().updateSourceVolume(SoundSource.MUSIC, previousVolume);
-        }
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> {
+            OptionInstance<Double> musicOption = mc.options.getSoundSourceOptionInstance(SoundSource.MUSIC);
+
+            if (musicOption != null) {
+                musicOption.set(originalVolume);
+                mc.options.save();
+
+                mc.getSoundManager().updateSourceVolume(SoundSource.MUSIC, originalVolume.floatValue());
+                originalVolume = null;
+            }
+        });
     }
 }

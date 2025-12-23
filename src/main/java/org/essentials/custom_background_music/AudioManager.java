@@ -4,90 +4,66 @@ import javazoom.jl.player.AudioDevice;
 import javazoom.jl.player.JavaSoundAudioDevice;
 import javazoom.jl.player.Player;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.sounds.SoundSource;
-
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.SourceDataLine;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Field;
 
-import static org.essentials.custom_background_music.MusicMuter.muteMinecraftMusic;
-import static org.essentials.custom_background_music.MusicMuter.unmuteMinecraftMusic;
-
 public class AudioManager {
     private static final AudioManager INSTANCE = new AudioManager();
-    Minecraft mc = Minecraft.getInstance();
 
     private String currentFileName = null;
     private File musicFile = null;
     private Player player;
     private Thread musicThread;
-    private FileInputStream fis;
+    private TrackableInputStream trackableStream;
 
-    private float volume = 1.0f; // Default 100%
-    private long totalLength = 0;
+    // Playback state
+    private float volume = 1.0f;
     private long pauseLocation = 0;
     private boolean isPaused = false;
-    @SuppressWarnings("FieldMayBeFinal")
-    private float currentVolume = mc.options.getSoundSourceVolume(SoundSource.MUSIC);
 
     private AudioManager() {}
 
     public static AudioManager getInstance() { return INSTANCE; }
 
-    /**
-     * Loads the music file and resets tracking variables.
-     */
     public boolean loadMusicFile(File file) {
         if (file != null && file.exists()) {
+            cleanup();
             this.musicFile = file;
             this.currentFileName = file.getName();
-            this.pauseLocation = 0;
-            this.isPaused = false;
             return true;
         }
         return false;
     }
 
-    /**
-     * Starts or Resumes playback in a background thread.
-     */
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    public void play() {
-        if (musicFile == null) return;
+    public synchronized void play() {
+        if (musicFile == null || isPlaying()) return;
 
-        if (musicThread != null && !isPaused) return;
+        MusicMuter.muteMinecraftMusic();
 
         musicThread = new Thread(() -> {
-            try {
-                fis = new FileInputStream(musicFile);
-                totalLength = fis.available();
-
-                if (pauseLocation > 0 && pauseLocation < totalLength) {
-                    fis.skip(totalLength - pauseLocation);
+            try (FileInputStream fis = new FileInputStream(musicFile)) {
+                if (pauseLocation > 0) {
+                    long skipped = fis.skip(pauseLocation);
+                    if (skipped < pauseLocation) pauseLocation = skipped;
                 }
 
-                player = new Player(fis);
+                trackableStream = new TrackableInputStream(new BufferedInputStream(fis));
+                player = new Player(trackableStream);
                 isPaused = false;
-                setVolume(this.volume);
 
-                muteMinecraftMusic();
+                setVolume(this.volume);
                 player.play();
 
-                // FIX: Check if player is null before calling isComplete()
-                // The player becomes null if pause() or stop() is called during playback
                 if (player != null && player.isComplete()) {
-                    cleanup();
+                    stop();
                 }
+
             } catch (Exception e) {
-                // If the thread is interrupted by player.close(),
-                // we don't necessarily want to print a full stack trace.
-                System.out.println("Playback thread stopped or interrupted.");
-            } finally {
-                // Ensure the stream is closed if the thread ends
-                try { if (fis != null) fis.close(); } catch (Exception ignored) {}
+                System.out.println("Audio stream closed.");
             }
         });
 
@@ -95,79 +71,60 @@ public class AudioManager {
         musicThread.start();
     }
 
-    /**
-     * Pauses the music by capturing the current stream position and closing the player.
-     */
-    @SuppressWarnings("CallToPrintStackTrace")
-    public void pause() {
+    public synchronized void pause() {
         if (player != null && !isPaused) {
-            try {
-                // Store how many bytes were left in the stream
-                pauseLocation = fis.available();
-                isPaused = true;
-                player.close(); // JLayer must close to stop the thread
-            } catch (Exception e) {
-                e.printStackTrace();
+            isPaused = true;
+            if (trackableStream != null) {
+                pauseLocation += trackableStream.getBytesRead();
             }
+            player.close();
+            player = null;
+            trackableStream = null;
         }
+        MusicMuter.unmuteMinecraftMusic();
     }
 
-    /**
-     * Toggles between Pause and Play.
-     */
-    public void pauseButton() {
+    public void togglePause() {
         if (isPaused) {
             play();
-            muteMinecraftMusic();
-        } else {
+        } else if (isPlaying()) {
             pause();
-            unmuteMinecraftMusic(currentVolume);
+        } else {
+            play();
         }
     }
 
-    /**
-     * Stops the music entirely and resets the playback position.
-     */
-    public void stop() {
-        pauseLocation = 0;
+    public synchronized void stop() {
         isPaused = false;
+        pauseLocation = 0;
         if (player != null) {
             player.close();
             player = null;
-            unmuteMinecraftMusic(currentVolume);
         }
+        trackableStream = null;
         if (musicThread != null) {
             musicThread.interrupt();
             musicThread = null;
-            unmuteMinecraftMusic(currentVolume);
         }
+        MusicMuter.unmuteMinecraftMusic();
     }
 
-    /**
-     * Sets the volume (0.0 to 1.0) using reflection to access the SourceDataLine.
-     */
     public void setVolume(float volume) {
         this.volume = Math.max(0.0f, Math.min(1.0f, volume));
-
-        if (player != null) {
-            try {
-                AudioDevice device = getAudioDevice();
-                if (device instanceof JavaSoundAudioDevice jsDevice) {
-                    Field sourceField = JavaSoundAudioDevice.class.getDeclaredField("source");
-                    sourceField.setAccessible(true);
-                    SourceDataLine source = (SourceDataLine) sourceField.get(jsDevice);
-
-                    if (source != null && source.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
-                        FloatControl gainControl = (FloatControl) source.getControl(FloatControl.Type.MASTER_GAIN);
-                        // Convert linear 0-1 to decibels
-                        float dB = (float) (Math.log(this.volume <= 0 ? 0.0001 : this.volume) / Math.log(10.0) * 20.0);
-                        gainControl.setValue(dB);
-                    }
+        if (player == null) return;
+        try {
+            AudioDevice device = getAudioDevice();
+            if (device instanceof JavaSoundAudioDevice jsDevice) {
+                Field sourceField = JavaSoundAudioDevice.class.getDeclaredField("source");
+                sourceField.setAccessible(true);
+                SourceDataLine source = (SourceDataLine) sourceField.get(jsDevice);
+                if (source != null && source.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                    FloatControl gainControl = (FloatControl) source.getControl(FloatControl.Type.MASTER_GAIN);
+                    float dB = (float) (Math.log(this.volume <= 0.0f ? 0.0001f : this.volume) / Math.log(10.0) * 20.0);
+                    gainControl.setValue(dB);
                 }
-            } catch (Exception e) {
-                // Reflection failed or volume not supported
             }
-        }
+        } catch (Exception ignored) {}
     }
 
     public float getVolume() { return this.volume; }
@@ -178,18 +135,22 @@ public class AudioManager {
         return (AudioDevice) deviceField.get(player);
     }
 
-    public boolean isPlaying() { return player != null && !isPaused; }
+    public boolean isPlaying() {
+        return player != null && musicThread != null && musicThread.isAlive() && !isPaused;
+    }
 
-    @SuppressWarnings("unused")
+    // --- GUI SUPPORT METHODS ---
+
     public boolean isPaused() { return isPaused; }
 
-    public boolean hasLoadedMusic() { return currentFileName != null; }
+    public boolean hasLoadedMusic() {
+        return musicFile != null && musicFile.exists();
+    }
 
-    public String getCurrentFileName() { return currentFileName; }
+    public String getCurrentFileName() {
+        return currentFileName != null ? currentFileName : "None";
+    }
 
-    /**
-     * Resets the manager completely.
-     */
     public void cleanup() {
         stop();
         currentFileName = null;

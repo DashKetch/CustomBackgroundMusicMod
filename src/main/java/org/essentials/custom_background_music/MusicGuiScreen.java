@@ -7,7 +7,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.util.tinyfd.TinyFileDialogs; // Native file dialogs
+import org.lwjgl.util.tinyfd.TinyFileDialogs;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -34,7 +34,7 @@ public class MusicGuiScreen extends Screen {
         int yPos = 40;
 
         // 1. Upload Button
-        this.addRenderableWidget(Button.builder(Component.literal("Upload Music File"), b -> openFileChooser())
+        this.addRenderableWidget(Button.builder(Component.literal("Upload MP3"), b -> openFileChooser())
                 .bounds(centerX - 100, yPos, 200, 20).build());
 
         // 2. Transport Row
@@ -42,7 +42,7 @@ public class MusicGuiScreen extends Screen {
         playButton = this.addRenderableWidget(Button.builder(Component.literal("Play"), b -> audioManager.play())
                 .bounds(centerX - 100, yPos, 64, 20).build());
 
-        pauseButton = this.addRenderableWidget(Button.builder(Component.literal("Pause"), b -> audioManager.pauseButton())
+        pauseButton = this.addRenderableWidget(Button.builder(Component.literal("Pause"), b -> audioManager.togglePause())
                 .bounds(centerX - 32, yPos, 64, 20).build());
 
         stopButton = this.addRenderableWidget(Button.builder(Component.literal("Stop"), b -> audioManager.stop())
@@ -69,39 +69,44 @@ public class MusicGuiScreen extends Screen {
     }
 
     private void openFileChooser() {
-        // Run on a separate thread so the game doesn't freeze while the window is open
         Thread thread = new Thread(() -> {
             try {
-                // native file dialog: title, defaultPath, filter patterns, filter description, allow multiple
+                // JLayer only supports MP3. Loading WAV/OGG will crash.
+                // We strictly filter for *.mp3 here.
                 String filePath = TinyFileDialogs.tinyfd_openFileDialog(
-                        "Select Music File",
+                        "Select MP3 File",
                         "",
                         null,
-                        "Music Files (*.mp3, *.wav, *.ogg)",
+                        "MP3 Files (*.mp3)",
                         false
                 );
 
                 if (filePath != null) {
                     File file = new File(filePath);
-                    // Return to Minecraft's main thread to update the UI/Manager
                     Minecraft.getInstance().execute(() -> {
                         if (audioManager.loadMusicFile(file)) {
-                            LOGGER.info("Successfully selected file: {}", file.getAbsolutePath());
+                            LOGGER.info("Selected file: {}", file.getAbsolutePath());
                         }
                     });
                 }
             } catch (Exception e) {
-                LOGGER.error("Native file chooser error", e);
+                LOGGER.error("File chooser error", e);
             }
         });
-        thread.setDaemon(true); // Ensures the thread dies if the game closes
+        thread.setDaemon(true);
         thread.start();
     }
 
     private void updateButtonStates() {
         boolean hasMusic = audioManager.hasLoadedMusic();
-        if (playButton != null) playButton.active = hasMusic;
-        if (pauseButton != null) pauseButton.active = hasMusic;
+        if (playButton != null) playButton.active = hasMusic && !audioManager.isPlaying();
+
+        // Pause button should be active if we are playing OR if we are paused
+        if (pauseButton != null) {
+            pauseButton.active = hasMusic;
+            pauseButton.setMessage(Component.literal(audioManager.isPlaying() ? "Pause" : "Resume"));
+        }
+
         if (stopButton != null) stopButton.active = hasMusic;
     }
 
@@ -117,7 +122,11 @@ public class MusicGuiScreen extends Screen {
         String fileName = audioManager.hasLoadedMusic() ? "§a" + audioManager.getCurrentFileName() : "§7None";
         guiGraphics.drawCenteredString(this.font, "File: " + fileName, centerX, statusY, 0xFFFFFF);
 
-        String status = audioManager.isPlaying() ? "§6Playing" : "§cStopped";
+        String status;
+        if (audioManager.isPlaying()) status = "§6Playing";
+        else if (audioManager.hasLoadedMusic() && !audioManager.isPlaying() && audioManager.getCurrentFileName() != null) status = "§ePaused/Ready";
+        else status = "§cStopped";
+
         guiGraphics.drawString(this.font, "Status: " + status, centerX - 95, statusY + 12, 0xFFFFFF);
         guiGraphics.drawString(this.font, String.format("Vol: %.0f%%", audioManager.getVolume() * 100), centerX + 40, statusY + 12, 0xFFFFFF);
     }
