@@ -16,6 +16,7 @@ public class CustomBackgroundMusic {
 
     public CustomBackgroundMusic() {
         createMusicDirectory();
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(new MusicHudRenderer());
     }
 
     private void createMusicDirectory() {
