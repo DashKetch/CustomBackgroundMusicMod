@@ -1,8 +1,12 @@
 package org.essentials.custom_background_music;
 
 import com.mojang.logging.LogUtils;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.common.NeoForge;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -14,9 +18,12 @@ public class CustomBackgroundMusic {
     public static final String MODID = "custom_background_music";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public CustomBackgroundMusic() {
+    public CustomBackgroundMusic(@NotNull ModContainer container) {
+        container.registerConfig(ModConfig.Type.CLIENT, ModConfigs.SPEC);
+
         createMusicDirectory();
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(new MusicHudRenderer());
+
+        NeoForge.EVENT_BUS.register(new MusicHudRenderer());
     }
 
     private void createMusicDirectory() {
