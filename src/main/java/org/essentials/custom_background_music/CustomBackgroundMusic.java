@@ -6,7 +6,6 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.NeoForge;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -18,10 +17,10 @@ public class CustomBackgroundMusic {
     public static final String MODID = "custom_background_music";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public CustomBackgroundMusic(@NotNull ModContainer container) {
-        container.registerConfig(ModConfig.Type.CLIENT, ModConfigs.SPEC);
-
+    public CustomBackgroundMusic(ModContainer container) {
         createMusicDirectory();
+
+        container.registerConfig(ModConfig.Type.CLIENT, ModConfigs.SPEC);
 
         NeoForge.EVENT_BUS.register(new MusicHudRenderer());
     }
@@ -31,7 +30,6 @@ public class CustomBackgroundMusic {
         try {
             if (!Files.exists(musicPath)) {
                 Files.createDirectories(musicPath);
-                LOGGER.info("Created custom music directory at: {}", musicPath);
             }
         } catch (IOException e) {
             LOGGER.error("Failed to create music directory", e);
