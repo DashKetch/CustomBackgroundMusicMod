@@ -42,9 +42,9 @@ public class MusicHudRenderer {
             // Draw Icons
             try {
                 //LOGGER.warn("Trying to render icons");
-                graphics.blitSprite(currentIcon, x + width + 15, iconY + 1, iconSize - 3, iconSize - 3);
-                graphics.blitSprite(spriteReverse, x + width + 3, iconY, iconSize, iconSize);
-                graphics.blitSprite(spriteForward, x + width + 24, iconY, iconSize, iconSize);
+                graphics.blitSprite(currentIcon, x + width + 16, iconY + 1, iconSize - 3, iconSize - 3);
+                graphics.blitSprite(spriteReverse, x + width + 4, iconY, iconSize, iconSize);
+                graphics.blitSprite(spriteForward, x + width + 25, iconY, iconSize, iconSize);
             } catch (Exception e) {
                 LOGGER.warn("Error while rendering icons", e);
             }
