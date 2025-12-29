@@ -67,30 +67,33 @@ public class MusicGuiScreen extends Screen {
             b.setMessage(Component.literal("Shuffle: " + (playlistManager.isShuffle() ? "On" : "Off")));
         }).bounds(centerX + 5, yPos, 100, 20).build());
 
-        // --- ROW 3: Transport Controls (<< Play/Pause Stop >>) ---
+        // --- ROW 3: Transport Controls (<< Play Resume Stop >>) ---
         yPos += 30;
 
         // Previous (<<)
         this.addRenderableWidget(Button.builder(Component.literal("<<"), b -> playlistManager.previous())
                 .bounds(centerX - 105, yPos, 30, 20).build());
 
+        // Play (Shortened to 48)
         playButton = this.addRenderableWidget(Button.builder(Component.literal("Play"), b -> {
             if (playlistManager.hasPlaylistSelected() && !audioManager.hasLoadedMusic()) {
                 playlistManager.startPlaylist();
             } else {
                 audioManager.play();
             }
-        }).bounds(centerX - 70, yPos, 50, 20).build());
+        }).bounds(centerX - 71, yPos, 48, 20).build());
 
+        // Resume/Pause (Stays 50 to accommodate "Resume" text)
         pauseButton = this.addRenderableWidget(Button.builder(Component.literal("Pause"), b -> audioManager.togglePause())
-                .bounds(centerX - 15, yPos, 50, 20).build());
+                .bounds(centerX - 21, yPos, 50, 20).build());
 
+        // Stop (Stays 40)
         stopButton = this.addRenderableWidget(Button.builder(Component.literal("Stop"), b -> audioManager.stop())
-                .bounds(centerX + 40, yPos, 40, 20).build());
+                .bounds(centerX + 31, yPos, 40, 20).build());
 
         // Next (>>)
         this.addRenderableWidget(Button.builder(Component.literal(">>"), b -> playlistManager.next())
-                .bounds(centerX + 85, yPos, 30, 20).build());
+                .bounds(centerX + 75, yPos, 30, 20).build());
 
         // --- ROW 4: Volume ---
         yPos += 25;
