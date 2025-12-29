@@ -58,9 +58,16 @@ public class AudioManager {
                 setVolume(this.volume);
                 player.play();
 
+                // --- CHANGED SECTION START ---
                 if (player != null && player.isComplete()) {
+                    // Song finished naturally.
+                    // We call stop() to clean up resources, then notify the playlist manager.
                     stop();
+
+                    // Trigger the next song in the playlist
+                    PlaylistManager.getInstance().onTrackFinished();
                 }
+                // --- CHANGED SECTION END ---
 
             } catch (Exception e) {
                 System.out.println("Audio stream closed.");

@@ -20,6 +20,8 @@ public class CustomBackgroundMusic {
     public CustomBackgroundMusic(ModContainer container) {
         createMusicDirectory();
 
+        PlaylistManager.getInstance().refreshPlaylists();
+
         container.registerConfig(ModConfig.Type.CLIENT, ModConfigs.SPEC);
 
         NeoForge.EVENT_BUS.register(new MusicHudRenderer());

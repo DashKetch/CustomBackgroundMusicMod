@@ -28,19 +28,48 @@ public class MusicGuiScreen extends Screen {
         Minecraft.getInstance().setScreen(new MusicGuiScreen());
     }
 
+    @SuppressWarnings("UnusedAssignment")
     @Override
     protected void init() {
         int centerX = this.width / 2;
-        int yPos = 40;
+        int yPos = 30; // Moved up slightly to fit more controls
 
-        // 1. Upload Button
-        this.addRenderableWidget(Button.builder(Component.literal("Upload MP3"), b -> openFileChooser())
+        PlaylistManager playlistManager = PlaylistManager.getInstance();
+
+        // 1. Playlist Controls
+        // Button to cycle through playlists found in config/custom_music/
+        this.addRenderableWidget(Button.builder(Component.literal("Playlist: " + playlistManager.getCurrentPlaylistName()), b -> {
+            playlistManager.cyclePlaylist();
+            b.setMessage(Component.literal("Playlist: " + playlistManager.getCurrentPlaylistName()));
+
+            // If we switched to a playlist, we can optionally autoload the first track (but not play yet)
+            // or just let the user hit Play.
+        }).bounds(centerX - 100, yPos, 150, 20).build());
+
+        // Refresh button (in case user added folders while game was running)
+        this.addRenderableWidget(Button.builder(Component.literal("Ref"), b -> {
+            playlistManager.refreshPlaylists();
+            // Force the cycle button to update text (requires finding the button or reopening screen)
+            // Simplest way: reopen screen
+            MusicGuiScreen.open();
+        }).bounds(centerX + 55, yPos, 45, 20).build());
+
+        yPos += 25;
+
+        // 2. Upload Button (Single File Mode)
+        this.addRenderableWidget(Button.builder(Component.literal("Select Single File"), b -> openFileChooser())
                 .bounds(centerX - 100, yPos, 200, 20).build());
 
-        // 2. Transport Row
+        // 3. Transport Row
         yPos += 30;
-        playButton = this.addRenderableWidget(Button.builder(Component.literal("Play"), b -> audioManager.play())
-                .bounds(centerX - 100, yPos, 64, 20).build());
+        playButton = this.addRenderableWidget(Button.builder(Component.literal("Play"), b -> {
+            // Logic: If a playlist is selected and nothing is loaded, start the playlist
+            if (playlistManager.hasPlaylistSelected() && !audioManager.hasLoadedMusic()) {
+                playlistManager.startPlaylist();
+            } else {
+                audioManager.play();
+            }
+        }).bounds(centerX - 100, yPos, 64, 20).build());
 
         pauseButton = this.addRenderableWidget(Button.builder(Component.literal("Pause"), b -> audioManager.togglePause())
                 .bounds(centerX - 32, yPos, 64, 20).build());
@@ -48,7 +77,7 @@ public class MusicGuiScreen extends Screen {
         stopButton = this.addRenderableWidget(Button.builder(Component.literal("Stop"), b -> audioManager.stop())
                 .bounds(centerX + 36, yPos, 64, 20).build());
 
-        // 3. Volume Row
+        // 4. Volume Row
         yPos += 25;
         this.addRenderableWidget(Button.builder(Component.literal("Vol -"), b -> audioManager.setVolume(audioManager.getVolume() - 0.1f))
                 .bounds(centerX - 100, yPos, 98, 20).build());
@@ -56,12 +85,8 @@ public class MusicGuiScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("Vol +"), b -> audioManager.setVolume(audioManager.getVolume() + 0.1f))
                 .bounds(centerX + 2, yPos, 98, 20).build());
 
-        // 4. Clear Button
+        // 5. Clear/Close
         yPos += 30;
-        this.addRenderableWidget(Button.builder(Component.literal("Clear Track"), b -> audioManager.cleanup())
-                .bounds(centerX - 100, yPos, 200, 20).build());
-
-        // 5. Close Button
         this.addRenderableWidget(Button.builder(Component.literal("Close"), b -> this.onClose())
                 .bounds(centerX - 100, this.height - 35, 200, 20).build());
 
@@ -99,9 +124,13 @@ public class MusicGuiScreen extends Screen {
 
     private void updateButtonStates() {
         boolean hasMusic = audioManager.hasLoadedMusic();
-        if (playButton != null) playButton.active = hasMusic && !audioManager.isPlaying();
+        boolean hasPlaylist = PlaylistManager.getInstance().hasPlaylistSelected();
 
-        // Pause button should be active if we are playing OR if we are paused
+        // Play button is active if music is loaded OR if we have a playlist ready to start
+        if (playButton != null) {
+            playButton.active = (hasMusic || hasPlaylist) && !audioManager.isPlaying();
+        }
+
         if (pauseButton != null) {
             pauseButton.active = hasMusic;
             pauseButton.setMessage(Component.literal(audioManager.isPlaying() ? "Pause" : "Resume"));
