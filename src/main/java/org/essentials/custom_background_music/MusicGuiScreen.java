@@ -103,7 +103,27 @@ public class MusicGuiScreen extends Screen {
         this.addRenderableWidget(Button.builder(Component.literal("Vol +"), b -> audioManager.setVolume(audioManager.getVolume() + 0.1f))
                 .bounds(centerX + 5, yPos, 100, 20).build());
 
-        // --- ROW 5: Close ---
+        // --- ROW 5: Reset Everything ---
+        // Row should stay as only one button to emphasize it
+        yPos += 30;
+        this.addRenderableWidget(Button.builder(Component.literal("Reset to Default"), b -> {
+            audioManager.cleanup(); // Stops music and clears track
+            // Reset PlaylistManager state
+            while (playlistManager.hasPlaylistSelected()) {
+                playlistManager.cyclePlaylist(); // Cycle until "None"
+            }
+            if (playlistManager.isShuffle()) {
+                playlistManager.toggleShuffle();
+            }
+            // Reset loop to NO_LOOP (cycles until ordinal 0)
+            while (!playlistManager.getLoopModeString().equals("Loop: Off")) {
+                playlistManager.cycleLoopMode();
+            }
+            // Refresh screen to update all button labels
+            MusicGuiScreen.open();
+        }).bounds(centerX - 105, yPos, 210, 20).build());
+
+        // --- ROW 6: Close ---
         this.addRenderableWidget(Button.builder(Component.literal("Close"), b -> this.onClose())
                 .bounds(centerX - 105, this.height - 30, 210, 20).build());
 

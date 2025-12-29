@@ -10,9 +10,35 @@ public class InputHandler {
 
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
-        // Check if the key we registered was pressed
+        // 1. Open GUI
         while (KeyBindings.OPEN_MUSIC_GUI.consumeClick()) {
             MusicGuiScreen.open();
+        }
+
+        // 2. Toggle Pause/Play
+        while (KeyBindings.PAUSE_PLAY_MUSIC.consumeClick()) {
+            AudioManager audio = AudioManager.getInstance();
+            PlaylistManager playlist = PlaylistManager.getInstance();
+
+            if (!audio.hasLoadedMusic() && playlist.hasPlaylistSelected()) {
+                playlist.startPlaylist();
+            } else {
+                audio.togglePause();
+            }
+        }
+
+        // 3. Next Track (Right Arrow)
+        while (KeyBindings.NEXT_TRACK.consumeClick()) {
+            if (PlaylistManager.getInstance().hasPlaylistSelected()) {
+                PlaylistManager.getInstance().next();
+            }
+        }
+
+        // 4. Previous Track (Left Arrow)
+        while (KeyBindings.PREVIOUS_TRACK.consumeClick()) {
+            if (PlaylistManager.getInstance().hasPlaylistSelected()) {
+                PlaylistManager.getInstance().previous();
+            }
         }
     }
 }

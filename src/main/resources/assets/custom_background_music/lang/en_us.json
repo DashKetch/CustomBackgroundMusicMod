@@ -1,4 +1,7 @@
 {
   "key.categories.custom_background_music": "Custom Background Music",
-  "key.custom_background_music.open_music_gui": "Open Music GUI"
+  "key.custom_background_music.open_music_gui": "Open Music GUI",
+  "key.custom_background_music.pause_play_music": "Pause/Play Music",
+  "key.custom_background_music.next_track": "Next Track",
+  "key.custom_background_music.previous_track": "Previous Track"
 }
