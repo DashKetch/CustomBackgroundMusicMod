@@ -15,10 +15,15 @@ import java.io.File;
 public class MusicGuiScreen extends Screen {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final AudioManager audioManager = AudioManager.getInstance();
+    private final PlaylistManager playlistManager = PlaylistManager.getInstance();
 
     private Button playButton;
     private Button pauseButton;
     private Button stopButton;
+
+    // New buttons needing updates
+    private Button loopButton;
+    private Button shuffleButton;
 
     public MusicGuiScreen() {
         super(Component.literal("Custom Music Player"));
@@ -28,67 +33,76 @@ public class MusicGuiScreen extends Screen {
         Minecraft.getInstance().setScreen(new MusicGuiScreen());
     }
 
-    @SuppressWarnings("UnusedAssignment")
     @Override
     protected void init() {
         int centerX = this.width / 2;
-        int yPos = 30; // Moved up slightly to fit more controls
+        int yPos = 30;
 
-        PlaylistManager playlistManager = PlaylistManager.getInstance();
-
-        // 1. Playlist Controls
-        // Button to cycle through playlists found in config/custom_music/
+        // --- ROW 1: Playlist Selection ---
         this.addRenderableWidget(Button.builder(Component.literal("Playlist: " + playlistManager.getCurrentPlaylistName()), b -> {
             playlistManager.cyclePlaylist();
+            // Re-init to update button text completely or just update message
             b.setMessage(Component.literal("Playlist: " + playlistManager.getCurrentPlaylistName()));
+            updateButtonStates();
+        }).bounds(centerX - 105, yPos, 130, 20).build());
 
-            // If we switched to a playlist, we can optionally autoload the first track (but not play yet)
-            // or just let the user hit Play.
-        }).bounds(centerX - 100, yPos, 150, 20).build());
-
-        // Refresh button (in case user added folders while game was running)
         this.addRenderableWidget(Button.builder(Component.literal("Ref"), b -> {
             playlistManager.refreshPlaylists();
-            // Force the cycle button to update text (requires finding the button or reopening screen)
-            // Simplest way: reopen screen
-            MusicGuiScreen.open();
-        }).bounds(centerX + 55, yPos, 45, 20).build());
+            MusicGuiScreen.open(); // Re-open to refresh all states
+        }).bounds(centerX + 30, yPos, 35, 20).build());
 
+        this.addRenderableWidget(Button.builder(Component.literal("File..."), b -> openFileChooser())
+                .bounds(centerX + 70, yPos, 35, 20).build());
+
+        // --- ROW 2: Playlist Settings (Loop / Shuffle) ---
         yPos += 25;
 
-        // 2. Upload Button (Single File Mode)
-        this.addRenderableWidget(Button.builder(Component.literal("Select Single File"), b -> openFileChooser())
-                .bounds(centerX - 100, yPos, 200, 20).build());
+        loopButton = this.addRenderableWidget(Button.builder(Component.literal(playlistManager.getLoopModeString()), b -> {
+            playlistManager.cycleLoopMode();
+            b.setMessage(Component.literal(playlistManager.getLoopModeString()));
+        }).bounds(centerX - 105, yPos, 100, 20).build());
 
-        // 3. Transport Row
+        shuffleButton = this.addRenderableWidget(Button.builder(Component.literal("Shuffle: " + (playlistManager.isShuffle() ? "On" : "Off")), b -> {
+            playlistManager.toggleShuffle();
+            b.setMessage(Component.literal("Shuffle: " + (playlistManager.isShuffle() ? "On" : "Off")));
+        }).bounds(centerX + 5, yPos, 100, 20).build());
+
+        // --- ROW 3: Transport Controls (<< Play/Pause Stop >>) ---
         yPos += 30;
+
+        // Previous (<<)
+        this.addRenderableWidget(Button.builder(Component.literal("<<"), b -> playlistManager.previous())
+                .bounds(centerX - 105, yPos, 30, 20).build());
+
         playButton = this.addRenderableWidget(Button.builder(Component.literal("Play"), b -> {
-            // Logic: If a playlist is selected and nothing is loaded, start the playlist
             if (playlistManager.hasPlaylistSelected() && !audioManager.hasLoadedMusic()) {
                 playlistManager.startPlaylist();
             } else {
                 audioManager.play();
             }
-        }).bounds(centerX - 100, yPos, 64, 20).build());
+        }).bounds(centerX - 70, yPos, 50, 20).build());
 
         pauseButton = this.addRenderableWidget(Button.builder(Component.literal("Pause"), b -> audioManager.togglePause())
-                .bounds(centerX - 32, yPos, 64, 20).build());
+                .bounds(centerX - 15, yPos, 50, 20).build());
 
         stopButton = this.addRenderableWidget(Button.builder(Component.literal("Stop"), b -> audioManager.stop())
-                .bounds(centerX + 36, yPos, 64, 20).build());
+                .bounds(centerX + 40, yPos, 40, 20).build());
 
-        // 4. Volume Row
+        // Next (>>)
+        this.addRenderableWidget(Button.builder(Component.literal(">>"), b -> playlistManager.next())
+                .bounds(centerX + 85, yPos, 30, 20).build());
+
+        // --- ROW 4: Volume ---
         yPos += 25;
         this.addRenderableWidget(Button.builder(Component.literal("Vol -"), b -> audioManager.setVolume(audioManager.getVolume() - 0.1f))
-                .bounds(centerX - 100, yPos, 98, 20).build());
+                .bounds(centerX - 105, yPos, 105, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("Vol +"), b -> audioManager.setVolume(audioManager.getVolume() + 0.1f))
-                .bounds(centerX + 2, yPos, 98, 20).build());
+                .bounds(centerX + 5, yPos, 100, 20).build());
 
-        // 5. Clear/Close
-        yPos += 30;
+        // --- ROW 5: Close ---
         this.addRenderableWidget(Button.builder(Component.literal("Close"), b -> this.onClose())
-                .bounds(centerX - 100, this.height - 35, 200, 20).build());
+                .bounds(centerX - 105, this.height - 30, 210, 20).build());
 
         updateButtonStates();
     }
@@ -96,21 +110,13 @@ public class MusicGuiScreen extends Screen {
     private void openFileChooser() {
         Thread thread = new Thread(() -> {
             try {
-                // JLayer only supports MP3. Loading WAV/OGG will crash.
-                // We strictly filter for *.mp3 here.
                 String filePath = TinyFileDialogs.tinyfd_openFileDialog(
-                        "Select MP3 File",
-                        "",
-                        null,
-                        "MP3 Files (*.mp3)",
-                        false
-                );
-
+                        "Select MP3", "", null, "MP3 Files (*.mp3)", false);
                 if (filePath != null) {
                     File file = new File(filePath);
                     Minecraft.getInstance().execute(() -> {
                         if (audioManager.loadMusicFile(file)) {
-                            LOGGER.info("Selected file: {}", file.getAbsolutePath());
+                            LOGGER.info("Selected: {}", file.getAbsolutePath());
                         }
                     });
                 }
@@ -124,19 +130,20 @@ public class MusicGuiScreen extends Screen {
 
     private void updateButtonStates() {
         boolean hasMusic = audioManager.hasLoadedMusic();
-        boolean hasPlaylist = PlaylistManager.getInstance().hasPlaylistSelected();
+        boolean hasPlaylist = playlistManager.hasPlaylistSelected();
 
-        // Play button is active if music is loaded OR if we have a playlist ready to start
-        if (playButton != null) {
-            playButton.active = (hasMusic || hasPlaylist) && !audioManager.isPlaying();
-        }
+        // Settings are only active if a playlist is selected
+        if (loopButton != null) loopButton.active = hasPlaylist;
+        if (shuffleButton != null) shuffleButton.active = hasPlaylist;
+
+        // Transport
+        if (playButton != null) playButton.active = (hasMusic || hasPlaylist) && !audioManager.isPlaying();
+        if (stopButton != null) stopButton.active = hasMusic;
 
         if (pauseButton != null) {
             pauseButton.active = hasMusic;
             pauseButton.setMessage(Component.literal(audioManager.isPlaying() ? "Pause" : "Resume"));
         }
-
-        if (stopButton != null) stopButton.active = hasMusic;
     }
 
     @Override
@@ -145,19 +152,19 @@ public class MusicGuiScreen extends Screen {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         int centerX = this.width / 2;
-        guiGraphics.drawCenteredString(this.font, this.title, centerX, 15, 0xFFFFFF);
+        guiGraphics.drawCenteredString(this.font, this.title, centerX, 10, 0xFFFFFF);
 
-        int statusY = this.height - 65;
+        int statusY = this.height - 55;
         String fileName = audioManager.hasLoadedMusic() ? "§a" + audioManager.getCurrentFileName() : "§7None";
-        guiGraphics.drawCenteredString(this.font, "File: " + fileName, centerX, statusY, 0xFFFFFF);
+        guiGraphics.drawCenteredString(this.font, fileName, centerX, statusY, 0xFFFFFF);
 
         String status;
         if (audioManager.isPlaying()) status = "§6Playing";
-        else if (audioManager.hasLoadedMusic() && !audioManager.isPlaying() && audioManager.getCurrentFileName() != null) status = "§ePaused/Ready";
+        else if (audioManager.isPaused()) status = "§ePaused";
         else status = "§cStopped";
 
-        guiGraphics.drawString(this.font, "Status: " + status, centerX - 95, statusY + 12, 0xFFFFFF);
-        guiGraphics.drawString(this.font, String.format("Vol: %.0f%%", audioManager.getVolume() * 100), centerX + 40, statusY + 12, 0xFFFFFF);
+        guiGraphics.drawString(this.font, status, centerX - 100, statusY + 12, 0xFFFFFF);
+        guiGraphics.drawString(this.font, String.format("Vol: %.0f%%", audioManager.getVolume() * 100), centerX + 60, statusY + 12, 0xFFFFFF);
     }
 
     @Override
