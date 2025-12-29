@@ -2,8 +2,11 @@ package org.essentials.custom_background_music;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
+
+import static org.essentials.custom_background_music.CustomBackgroundMusic.LOGGER;
 
 public class MusicHudRenderer {
 
@@ -24,9 +27,27 @@ public class MusicHudRenderer {
             GuiGraphics graphics = event.getGuiGraphics();
 
             String fullText = (audio.isPaused() ? "Paused: " : "Now Playing: ") + audio.getCurrentFileName().replace(".mp3", "");
+            final ResourceLocation spritePlay = ResourceLocation.fromNamespaceAndPath("custom_background_music", "icons/play");
+            final ResourceLocation spritePause = ResourceLocation.fromNamespaceAndPath("custom_background_music", "icons/pause");
+            final ResourceLocation spriteForward = ResourceLocation.fromNamespaceAndPath("custom_background_music", "icons/forward");
+            final ResourceLocation spriteReverse = ResourceLocation.fromNamespaceAndPath("custom_background_music", "icons/reverse");
+            ResourceLocation currentIcon = audio.isPaused() ? spritePause : spritePlay;
 
             int x = ModConfigs.HUD_X.get();
             int y = ModConfigs.HUD_Y.get();
+            int iconSize = 12; // Size in pixels
+            int iconY = y - 2; // Aligning with text height
+            int width = mc.font.width(fullText);
+
+            // Draw Icons
+            try {
+                //LOGGER.warn("Trying to render icons");
+                graphics.blitSprite(currentIcon, x + width + 15, iconY + 1, iconSize - 3, iconSize - 3);
+                graphics.blitSprite(spriteReverse, x + width + 3, iconY, iconSize, iconSize);
+                graphics.blitSprite(spriteForward, x + width + 24, iconY, iconSize, iconSize);
+            } catch (Exception e) {
+                LOGGER.warn("Error while rendering icons", e);
+            }
 
             int color;
             try {
@@ -35,8 +56,6 @@ public class MusicHudRenderer {
             } catch (NumberFormatException e) {
                 color = 0xFFFFFF; // Default to white
             }
-
-            int width = mc.font.width(fullText);
 
             // Draw background box (Semi-transparent black)
             graphics.fill(x - 4, y - 4, x + width + 4, y + 12, 0x99000000);
