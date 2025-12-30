@@ -117,7 +117,11 @@ public class AudioManager {
     }
 
     public void setVolume(float volume) {
-        this.volume = Math.max(0.0f, Math.min(1.0f, volume));
+        if (!ModConfigs.RESTRICT_VOLUME.get()) {
+            this.volume = Math.max(0.0f, Math.min(1.0f, volume));
+        } else {
+            this.volume = Math.max(0.0f, Math.min(2.0f, volume));
+        }
         if (player == null) return;
         try {
             AudioDevice device = getAudioDevice();
