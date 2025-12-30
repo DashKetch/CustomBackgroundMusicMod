@@ -10,6 +10,7 @@ public class InputHandler {
 
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
+        PlaylistManager playlist = PlaylistManager.getInstance();
         // 1. Open GUI
         while (KeyBindings.OPEN_MUSIC_GUI.consumeClick()) {
             MusicGuiScreen.open();
@@ -18,7 +19,6 @@ public class InputHandler {
         // 2. Toggle Pause/Play
         while (KeyBindings.PAUSE_PLAY_MUSIC.consumeClick()) {
             AudioManager audio = AudioManager.getInstance();
-            PlaylistManager playlist = PlaylistManager.getInstance();
 
             if (!audio.hasLoadedMusic() && playlist.hasPlaylistSelected()) {
                 playlist.startPlaylist();
@@ -62,7 +62,11 @@ public class InputHandler {
         // 7. Stop Music
         while (KeyBindings.STOP_MUSIC.consumeClick()) {
             AudioManager audio = AudioManager.getInstance();
-            if (audio.hasLoadedMusic()) {
+            if (!audio.hasLoadedMusic() && playlist.hasPlaylistSelected()) {
+                playlist.startPlaylist();
+            } else if (audio.hasLoadedMusic()) {
+                audio.play();
+            } else if (!audio.hasLoadedMusic() && audio.isPlaying()) {
                 audio.stop();
             }
         }
