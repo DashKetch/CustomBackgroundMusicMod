@@ -13,8 +13,6 @@ public class MusicHudRenderer {
     public static int stopIconSize = 12;
     public static int forwardIconSize = 12;
     public static int reverseIconSize = 12;
-
-    // Define icons as static final constants (Optimization: prevents recreating them every frame)
     private static final ResourceLocation SPRITE_PLAY = ResourceLocation.fromNamespaceAndPath("custom_background_music", "icons/play");
     private static final ResourceLocation SPRITE_PAUSE = ResourceLocation.fromNamespaceAndPath("custom_background_music", "icons/pause");
     private static final ResourceLocation SPRITE_FORWARD = ResourceLocation.fromNamespaceAndPath("custom_background_music", "icons/forward");
@@ -52,20 +50,25 @@ public class MusicHudRenderer {
             }
 
             // Draw background box
-            graphics.fill(x - 4, y - 4, x + width + 4 + (12 * 3), y + 12, 0x99000000);
+            if (ModConfigs.SHOW_HUD_ICONS.get()) {
+                graphics.fill(x - 4, y - 4, x + width + 4 + (12 * 3), y + 12, 0x99000000);
+            } else {
+                graphics.fill(x - 4, y - 4, x + width + 4, y + 12, 0x99000000);
+            }
 
             // Draw Text
             graphics.drawString(mc.font, fullText, x, y, color, true);
 
             // Draw Icons
-            try {
-                graphics.blitSprite(currentIcon, x + width + 16, iconY + 1, playIconSize - 3, playIconSize - 3);
-                graphics.blitSprite(SPRITE_REVERSE, x + width + 4, iconY, reverseIconSize, reverseIconSize);
-                graphics.blitSprite(SPRITE_FORWARD, x + width + 25, iconY, forwardIconSize, forwardIconSize);
-            } catch (Exception e) {
-                LOGGER.warn("Error rendering icons", e);
+            if (ModConfigs.SHOW_HUD_ICONS.get()) {
+                try {
+                    graphics.blitSprite(currentIcon, x + width + 16, iconY + 1, playIconSize - 3, playIconSize - 3);
+                    graphics.blitSprite(SPRITE_REVERSE, x + width + 4, iconY, reverseIconSize, reverseIconSize);
+                    graphics.blitSprite(SPRITE_FORWARD, x + width + 25, iconY, forwardIconSize, forwardIconSize);
+                } catch (Exception e) {
+                    LOGGER.warn("Error rendering icons", e);
+                }
             }
-
         }
         else if (audio.hasLoadedMusic() || playlist.hasPlaylistSelected()) {
             try {
@@ -77,8 +80,12 @@ public class MusicHudRenderer {
                     color = 0xFFFFFF;
                 }
                 width = mc.font.width("Stopped ");
-                graphics.fill(x - 4, y - 4, x + width + 14, y + 12, 0x99000000);
-                graphics.blitSprite(SPRITE_STOP, x + width, iconY + 1, stopIconSize - 2, stopIconSize - 2);
+                if (ModConfigs.SHOW_HUD_ICONS.get()) {
+                    graphics.fill(x - 4, y - 4, x + width + 14, y + 12, 0x99000000);
+                    graphics.blitSprite(SPRITE_STOP, x + width, iconY + 1, stopIconSize - 2, stopIconSize - 2);
+                } else {
+                    graphics.fill(x - 4, y - 4, x + width, y + 12, 0x99000000);
+                }
                 graphics.drawString(mc.font, "Stopped", x, y, color, true);
             } catch (Exception e) {
                 LOGGER.warn("Error rendering stop icon", e);
