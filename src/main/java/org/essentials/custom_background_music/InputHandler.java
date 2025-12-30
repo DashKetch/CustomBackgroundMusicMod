@@ -62,12 +62,12 @@ public class InputHandler {
         // 7. Stop Music
         while (KeyBindings.STOP_MUSIC.consumeClick()) {
             AudioManager audio = AudioManager.getInstance();
-            if (!audio.hasLoadedMusic() && playlist.hasPlaylistSelected()) {
-                playlist.startPlaylist();
+            if (audio.isPlaying() || audio.isPaused()) {
+                audio.stop();
             } else if (audio.hasLoadedMusic()) {
                 audio.play();
-            } else if (!audio.hasLoadedMusic() && audio.isPlaying()) {
-                audio.stop();
+            } else if (!audio.hasLoadedMusic() && playlist.hasPlaylistSelected()) {
+                playlist.startPlaylist();
             }
         }
     }
