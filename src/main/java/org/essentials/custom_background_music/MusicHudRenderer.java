@@ -9,6 +9,10 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import static org.essentials.custom_background_music.CustomBackgroundMusic.LOGGER;
 
 public class MusicHudRenderer {
+    public static int playIconSize = 12;
+    public static int stopIconSize = 12;
+    public static int forwardIconSize = 12;
+    public static int reverseIconSize = 12;
 
     // Define icons as static final constants (Optimization: prevents recreating them every frame)
     private static final ResourceLocation SPRITE_PLAY = ResourceLocation.fromNamespaceAndPath("custom_background_music", "icons/play");
@@ -30,7 +34,6 @@ public class MusicHudRenderer {
 
         int x = ModConfigs.HUD_X.get();
         int y = ModConfigs.HUD_Y.get();
-        int iconSize = 12;
         int iconY = y - 2;
         int width;
         if (audio.hasLoadedMusic() && (audio.isPlaying() || audio.isPaused())) {
@@ -49,16 +52,16 @@ public class MusicHudRenderer {
             }
 
             // Draw background box
-            graphics.fill(x - 4, y - 4, x + width + 4, y + 12, 0x99000000);
+            graphics.fill(x - 4, y - 4, x + width + 4 + (12 * 3), y + 12, 0x99000000);
 
             // Draw Text
             graphics.drawString(mc.font, fullText, x, y, color, true);
 
             // Draw Icons
             try {
-                graphics.blitSprite(currentIcon, x + width + 16, iconY + 1, iconSize - 3, iconSize - 3);
-                graphics.blitSprite(SPRITE_REVERSE, x + width + 4, iconY, iconSize, iconSize);
-                graphics.blitSprite(SPRITE_FORWARD, x + width + 25, iconY, iconSize, iconSize);
+                graphics.blitSprite(currentIcon, x + width + 16, iconY + 1, playIconSize - 3, playIconSize - 3);
+                graphics.blitSprite(SPRITE_REVERSE, x + width + 4, iconY, reverseIconSize, reverseIconSize);
+                graphics.blitSprite(SPRITE_FORWARD, x + width + 25, iconY, forwardIconSize, forwardIconSize);
             } catch (Exception e) {
                 LOGGER.warn("Error rendering icons", e);
             }
@@ -74,8 +77,8 @@ public class MusicHudRenderer {
                     color = 0xFFFFFF;
                 }
                 width = mc.font.width("Stopped ");
-                graphics.fill(x - 4, y - 4, x + width + iconSize + 2, y + 12, 0x99000000);
-                graphics.blitSprite(SPRITE_STOP, x + width, iconY + 1, iconSize - 2, iconSize - 2);
+                graphics.fill(x - 4, y - 4, x + width + 14, y + 12, 0x99000000);
+                graphics.blitSprite(SPRITE_STOP, x + width, iconY + 1, stopIconSize - 2, stopIconSize - 2);
                 graphics.drawString(mc.font, "Stopped", x, y, color, true);
             } catch (Exception e) {
                 LOGGER.warn("Error rendering stop icon", e);
