@@ -108,6 +108,13 @@ public class MusicGuiScreen extends Screen {
         yPos += 30;
         this.addRenderableWidget(Button.builder(Component.literal("Reset to Default"), b -> {
             audioManager.cleanup(); // Stops music and clears track
+            if (audioManager.getVolume() == 1.0f) {
+                return;
+            } else if (audioManager.getVolume() < 1.0f) {
+                audioManager.setVolume(audioManager.getVolume() + (1.0f - audioManager.getVolume()));
+            } else if (audioManager.getVolume() > 1.0f) {
+                audioManager.setVolume(audioManager.getVolume() - (audioManager.getVolume() - 1.0f));
+            }
             // Reset PlaylistManager state
             while (playlistManager.hasPlaylistSelected()) {
                 playlistManager.cyclePlaylist(); // Cycle until "None"
