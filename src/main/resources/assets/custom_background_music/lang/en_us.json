@@ -5,5 +5,6 @@
   "key.custom_background_music.next_track": "Next Track",
   "key.custom_background_music.previous_track": "Previous Track",
   "key.custom_background_music.volume_down": "Volume Down",
-  "key.custom_background_music.volume_up": "Volume Up"
+  "key.custom_background_music.volume_up": "Volume Up",
+  "key.custom_background_music.stop": "Stop Music"
 }

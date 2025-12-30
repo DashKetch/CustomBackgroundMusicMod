@@ -58,5 +58,13 @@ public class InputHandler {
                 audio.setVolume(audio.getVolume() - 0.1f);
             }
         }
+
+        // 7. Stop Music
+        while (KeyBindings.STOP_MUSIC.consumeClick()) {
+            AudioManager audio = AudioManager.getInstance();
+            if (audio.hasLoadedMusic()) {
+                audio.stop();
+            }
+        }
     }
 }
