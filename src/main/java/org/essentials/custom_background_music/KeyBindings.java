@@ -16,6 +16,8 @@ public class KeyBindings {
     public static KeyMapping PAUSE_PLAY_MUSIC;
     public static KeyMapping NEXT_TRACK;
     public static KeyMapping PREVIOUS_TRACK;
+    public static KeyMapping VOLUME_UP;
+    public static KeyMapping VOLUME_DOWN;
 
     @SubscribeEvent
     public static void registerKeys(RegisterKeyMappingsEvent event) {
@@ -44,9 +46,24 @@ public class KeyBindings {
                 GLFW.GLFW_KEY_LEFT, // Default to Left Arrow
                 CATEGORY
         );
+        VOLUME_UP = new KeyMapping(
+                "key.custom_background_music.volume_up",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_UP, // Default to Up Arrow
+                CATEGORY
+        );
+
+        VOLUME_DOWN = new KeyMapping(
+                "key.custom_background_music.volume_down",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_DOWN, // Default to Down Arrow
+                CATEGORY
+        );
         event.register(OPEN_MUSIC_GUI);
         event.register(PAUSE_PLAY_MUSIC);
         event.register(NEXT_TRACK);
         event.register(PREVIOUS_TRACK);
+        event.register(VOLUME_UP);
+        event.register(VOLUME_DOWN);
     }
 }
