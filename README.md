@@ -22,7 +22,7 @@ Tired of the same old tracks? **Dash's Custom Background Music Mod** gives you t
 
 ---
 ## 🧑‍🏫 Playlist Tutorial
-1. Go to the instance root folder.![Instance root](https://cdn.modrinth.com/data/cached_images/caca0e046c2487293053ebdada01834c8bf46c59.png)
+1. Go to the instance root folder. This is often found by clicking the three dots and open folder.![Instance root](https://cdn.modrinth.com/data/cached_images/caca0e046c2487293053ebdada01834c8bf46c59.png)
 2. Go to the instance config folder. If it isn't there, you may have to run your game.![Instance configs](https://cdn.modrinth.com/data/cached_images/3232fd57e04eec81146bdd75d48ce8063ab0f1aa.png)
 3. Go to custom background music's config.
 4. Create a new folder and name it whatever you'd like. For the example, my playlist/folder is named MyEpicPlaylist.![Our config/folder create](https://cdn.modrinth.com/data/cached_images/7f38f1db10130a796bc39f9dd3e4dfb038a7ecd7.png)
