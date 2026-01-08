@@ -6,7 +6,8 @@ license="MIT"
 modId="custom_background_music"
 version="1.0.0"
 displayName="Custom Background Music"
-authors="Your Name"
+authors="Dash_Ketch"
+logoFile = "logo.png"
 description='''
 A mod that allows you to upload and play custom music files as background music in Minecraft.
 '''
