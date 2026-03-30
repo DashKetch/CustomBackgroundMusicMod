@@ -1,5 +1,9 @@
 # Dash's Custom Background Music Mod
 
+![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
+![NeoForge](https://img.shields.io/badge/Loader-NeoForge-orange)
+![License](https://img.shields.io/badge/License-MIT-blue)
+
 Tired of the same old tracks? **Dash's Custom Background Music Mod** gives you total control over your game's atmosphere by allowing you to replace the vanilla soundtrack with your own music files. **_Tutorials Below!_**
 
 ---
