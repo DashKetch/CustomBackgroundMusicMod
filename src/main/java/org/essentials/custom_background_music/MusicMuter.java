@@ -8,10 +8,14 @@ public class MusicMuter {
 
     private static Double originalVolume = null;
 
+    // Removed the unused Player parameter. Minecraft.getInstance() targets the local client.
     public static void muteMinecraftMusic() {
         Minecraft mc = Minecraft.getInstance();
+
+        // Safety check: Only run if the player is actually loaded into a world
+        if (mc.player == null) return;
+
         mc.execute(() -> {
-            // Use the getter method to access the private option
             OptionInstance<Double> musicOption = mc.options.getSoundSourceOptionInstance(SoundSource.MUSIC);
 
             if (musicOption != null) {
@@ -20,9 +24,11 @@ public class MusicMuter {
                 if (current > 0.0) {
                     originalVolume = current;
                     musicOption.set(0.0);
-                    mc.options.save();
 
-                    // Force sound engine update
+                    // CRITICAL FIX: Do NOT call mc.options.save() here!
+                    // We only want to mute it in memory, not save '0.0' to the user's settings file.
+
+                    // Force sound engine update for the local player
                     mc.getSoundManager().updateSourceVolume(SoundSource.MUSIC, 0.0f);
                 }
             }
@@ -38,8 +44,10 @@ public class MusicMuter {
 
             if (musicOption != null) {
                 musicOption.set(originalVolume);
-                mc.options.save();
 
+                // Do NOT call mc.options.save() here either.
+
+                // Restore sound engine volume
                 mc.getSoundManager().updateSourceVolume(SoundSource.MUSIC, originalVolume.floatValue());
                 originalVolume = null;
             }

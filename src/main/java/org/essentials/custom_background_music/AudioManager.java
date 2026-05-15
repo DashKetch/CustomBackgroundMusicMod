@@ -42,6 +42,7 @@ public class AudioManager {
     public synchronized void play() {
         if (musicFile == null || isPlaying()) return;
 
+        // This now correctly calls the static method without needing a player argument
         MusicMuter.muteMinecraftMusic();
 
         musicThread = new Thread(() -> {
@@ -88,6 +89,7 @@ public class AudioManager {
             player = null;
             trackableStream = null;
         }
+        // Unmute background music when paused
         MusicMuter.unmuteMinecraftMusic();
     }
 
@@ -113,6 +115,7 @@ public class AudioManager {
             musicThread.interrupt();
             musicThread = null;
         }
+        // Unmute background music when stopped
         MusicMuter.unmuteMinecraftMusic();
     }
 
