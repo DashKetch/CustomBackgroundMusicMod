@@ -18,19 +18,14 @@ public class MusicMuter {
         mc.execute(() -> {
             OptionInstance<Double> musicOption = mc.options.getSoundSourceOptionInstance(SoundSource.MUSIC);
 
-            if (musicOption != null) {
-                double current = musicOption.get();
+            double current = musicOption.get();
 
-                if (current > 0.0) {
-                    originalVolume = current;
-                    musicOption.set(0.0);
+            if (current > 0.0) {
+                originalVolume = current;
+                musicOption.set(0.0);
 
-                    // CRITICAL FIX: Do NOT call mc.options.save() here!
-                    // We only want to mute it in memory, not save '0.0' to the user's settings file.
-
-                    // Force sound engine update for the local player
-                    mc.getSoundManager().updateSourceVolume(SoundSource.MUSIC, 0.0f);
-                }
+                // Force sound engine update for the local player
+                mc.getSoundManager().updateSourceVolume(SoundSource.MUSIC, 0.0f);
             }
         });
     }
@@ -42,15 +37,11 @@ public class MusicMuter {
         mc.execute(() -> {
             OptionInstance<Double> musicOption = mc.options.getSoundSourceOptionInstance(SoundSource.MUSIC);
 
-            if (musicOption != null) {
-                musicOption.set(originalVolume);
+            musicOption.set(originalVolume);
 
-                // Do NOT call mc.options.save() here either.
-
-                // Restore sound engine volume
-                mc.getSoundManager().updateSourceVolume(SoundSource.MUSIC, originalVolume.floatValue());
-                originalVolume = null;
-            }
+            // Restore sound engine volume
+            mc.getSoundManager().updateSourceVolume(SoundSource.MUSIC, originalVolume.floatValue());
+            originalVolume = null;
         });
     }
 }
