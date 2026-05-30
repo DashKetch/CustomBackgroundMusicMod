@@ -3,6 +3,8 @@ package org.essentials.custom_background_music;
 import javazoom.jl.player.AudioDevice;
 import javazoom.jl.player.JavaSoundAudioDevice;
 import javazoom.jl.player.Player;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ServerData;
 
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.SourceDataLine;
@@ -10,6 +12,8 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Field;
+
+import static org.essentials.custom_background_music.CustomBackgroundMusic.LOGGER;
 
 public class AudioManager {
     private static final AudioManager INSTANCE = new AudioManager();
@@ -19,6 +23,7 @@ public class AudioManager {
     private Player player;
     private Thread musicThread;
     private TrackableInputStream trackableStream;
+    private String lastServerIp = null;
 
     // Playback state
     private float volume = 1.0f;
@@ -41,6 +46,7 @@ public class AudioManager {
 
     public synchronized void play() {
         if (musicFile == null || isPlaying()) return;
+        this.lastServerIp = getCurrentServerAddress();
 
         // This now correctly calls the static method without needing a player argument
         MusicMuter.muteMinecraftMusic();
@@ -93,6 +99,43 @@ public class AudioManager {
         MusicMuter.unmuteMinecraftMusic();
     }
 
+    private String getCurrentServerAddress() {
+        ServerData serverData = Minecraft.getInstance().getCurrentServer();
+        if (serverData != null) {
+            return serverData.ip;
+        }
+        if (Minecraft.getInstance().isLocalServer()) {
+            return "singleplayer";
+        }
+        return "none";
+    }
+
+    // Leverages player's exact pause location logic on disconnect
+    public synchronized void onPlayerDisconnect() {
+        if (isPlaying()) {
+            LOGGER.info("[CUSTOM DISCS] Player disconnected. Storing byte offset marker.");
+
+            if (trackableStream != null) {
+                this.pauseLocation += trackableStream.getBytesRead();
+            }
+
+            togglePause();
+            MusicMuter.unmuteMinecraftMusic();
+        }
+    }
+
+    public void onPlayerReconnect() {
+        String currentServer = getCurrentServerAddress();
+
+        if (isPaused) {
+            if (currentServer.equals(lastServerIp)) {
+                LOGGER.info("[CUSTOM DISCS] Reconnected to same server. Resuming track via byte-offset.");
+                togglePause();
+            }
+        }
+    }
+
+
     public void togglePause() {
         if (isPaused) {
             play();
@@ -121,9 +164,9 @@ public class AudioManager {
 
     public void setVolume(float volume) {
         if (!ModConfigs.RESTRICT_VOLUME.get()) {
-            this.volume = Math.max(0.0f, Math.min(1.0f, volume));
+            this.volume = Math.clamp(volume, 0.0f, 1.0f);
         } else {
-            this.volume = Math.max(0.0f, Math.min(2.0f, volume));
+            this.volume = Math.clamp(volume, 0.0f, 2.0f);
         }
         if (player == null) return;
         try {
