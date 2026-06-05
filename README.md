@@ -42,4 +42,44 @@ Tired of the same old tracks? **Dash's Custom Background Music Mod** gives you t
 **Q: What file formats are supported?** A: Only .mp3 files are supported thus far, I am unfortunately not planning to add compat for other formats.
 ---
 
+
+## License
+
+This project is licensed under a **Custom Source-Available License**.
+
+### ✅ Allowed
+
+You may:
+
+- View and study the source code.
+- Use the project for personal, educational, and research purposes.
+- Modify the source code.
+- Create private forks and custom versions for non-commercial use.
+
+### ❌ Not Allowed Without Permission
+
+You may not:
+
+- Sell this project.
+- Sell modified versions of this project.
+- Include this project in commercial products or services.
+- Use this project for revenue-generating activities.
+- Redistribute this project or derivative works for commercial purposes.
+
+### Commercial Use
+
+Commercial use requires a separate license agreement from the author.
+
+If you would like to use this project commercially, please join the Discord server and contact the author to discuss licensing terms:
+
+Discord: https://discord.gg/gEjJwKk8gs
+
+Commercial rights are granted only through a separate written agreement.
+
+### Disclaimer
+
+This software is provided "as is" without warranty of any kind. See `LICENSE.md` for the full license text.
+
+---
+
 **Created by Dash** *Your world. Your music.*
